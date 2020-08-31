@@ -1,3 +1,2 @@
 new-bootstrap-binaries-from-build-output.patch
-no-nuget.patch
 debian-cli-policy.patch
