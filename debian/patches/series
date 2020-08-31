@@ -1,2 +1,3 @@
 no-nuget-in-makefile.patch
 new-bootstrap-binaries-from-build-output.patch
+use-xbuild.patch

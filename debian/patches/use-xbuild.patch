@@ -1,0 +1,174 @@
+--- fsharp.orig/Makefile
++++ fsharp/Makefile
+@@ -18,20 +18,20 @@ all:
+ 	$(MAKE) build
+ 
+ build-proto:
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/FSharp.Build-proto/FSharp.Build-proto.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/Fsc-proto/Fsc-proto.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=Proto /p:TargetFramework=$(TargetFramework) src/fsharp/FSharp.Build-proto/FSharp.Build-proto.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=Proto /p:TargetFramework=$(TargetFramework) src/fsharp/Fsc-proto/Fsc-proto.fsproj
+ 
+ # The main targets
+ build:
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Build/FSharp.Build.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Private/FSharp.Compiler.Private.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/Fsc/Fsc.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Interactive.Settings/FSharp.Compiler.Interactive.Settings.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Server.Shared/FSharp.Compiler.Server.Shared.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsi/Fsi.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
+-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 tests/FSharp.Core.UnitTests/FSharp.Core.Unittests.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Core/FSharp.Core.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Build/FSharp.Build.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Private/FSharp.Compiler.Private.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/Fsc/Fsc.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Interactive.Settings/FSharp.Compiler.Interactive.Settings.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Server.Shared/FSharp.Compiler.Server.Shared.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/fsi/Fsi.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
++	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 tests/FSharp.Core.UnitTests/FSharp.Core.Unittests.fsproj
+ 	mkdir -p $(Configuration)/fsharp30/net40/bin
+ 	mkdir -p $(Configuration)/fsharp31/net40/bin
+ 	mkdir -p $(Configuration)/fsharp40/net40/bin
+@@ -66,12 +66,12 @@ install:
+ 	-rm -fr $(DESTDIR)$(monodir)/fsharp
+ 	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ F#
+ 	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#
+-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v/FSharp
+-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v11.0/FSharp
+-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v12.0/FSharp
+-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v14.0/FSharp
+-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v15.0/FSharp
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 install
++	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v/FSharp
++	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp
++	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp
++	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp
++	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v15.0/FSharp
++	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 install
+ 	$(MAKE) -C mono/FSharp.Build install
+ 	$(MAKE) -C mono/FSharp.Compiler.Private install
+ 	$(MAKE) -C mono/Fsc install
+@@ -79,18 +79,18 @@ install:
+ 	$(MAKE) -C mono/FSharp.Compiler.Server.Shared install
+ 	$(MAKE) -C mono/fsi install
+ 	$(MAKE) -C mono/fsiAnyCpu install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=3.0 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=3.1 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=4.0 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=4.1 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable47 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable7 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable78 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable259 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=monoandroid10+monotouch10+xamarinios10 install
+-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=xamarinmacmobile install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.1 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=portable47 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=portable7 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=portable78 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=portable259 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=monoandroid10+monotouch10+xamarinios10 install
++	$(MAKE) -C mono/FSharp.Core TargetFramework=xamarinmacmobile install
+ 	echo "------------------------------ INSTALLED FILES --------------"
+-	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/Reference\ Assemblies $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
++	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/Reference\ Assemblies $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
+ 
+ dist:
+ 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
+--- fsharp.orig/mono/config.make
++++ fsharp/mono/config.make
+@@ -116,6 +116,7 @@ INSTALL_BIN = $(INSTALL) -c -m 755
+ INSTALL_LIB = $(INSTALL_BIN)
+ 
+ MSBUILD = msbuild
++XBUILD = xbuild
+ 
+ EXTRA_DIST = configure
+ NO_DIST = .gitignore lib/debug lib/proto lib/release
+--- fsharp.orig/tests/projects/build.sh
++++ fsharp/tests/projects/build.sh
+@@ -1,42 +1,42 @@
+-(cd Sample_MonoDevelop_3_2_8_Console && msbuild) &&
+-#(cd Sample_VS2010_FSharp_ConsoleApp_net35 && msbuild) &&
+-(cd Sample_VS2010_FSharp_ConsoleApp_net40 && msbuild) &&
+-#(cd Sample_VS2012_FSharp_ConsoleApp_net35 && msbuild) &&
+-(cd Sample_VS2012_FSharp_ConsoleApp_net40 && msbuild) &&
+-(cd Sample_VS2012_FSharp_ConsoleApp_net45 && msbuild) &&
+-(cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource && msbuild) &&
+-(cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource_using_bootstrap && msbuild) &&
+-(cd Sample_VS2012_FSharp_Portable_Library && msbuild) &&
+-(cd Sample_VS2013_FSharp_ConsoleApp_net40 && msbuild) &&
+-(cd Sample_VS2013_FSharp_ConsoleApp_net45 && msbuild) &&
+-(cd Sample_VS2013_FSharp_ConsoleApp_net451 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Library_net40 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Library_net45 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Library_net451 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net40 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net45 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net451 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_net45 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_net451 && msbuild) &&
+-(cd Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013 && msbuild) &&
+-(cd Sample_VS2012_FSharp_Portable_Library_upgraded_2013 && msbuild) &&
+-(cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile78 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Console_App_net40 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Console_App_net45 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Console_App_net451 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Console_App_net452 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Library_net40 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Library_net45 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Library_net45_fsharp_30 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Library_net45_fsharp_31 && msbuild) &&
+-(cd Sample_VS2015_FSharp_Portable7_Library && msbuild) &&
+-(cd Sample_VS2015_FSharp_Portable47_Library && msbuild) &&
+-(cd Sample_VS2015_FSharp_Portable78_Library && msbuild) &&
+-(cd Sample_VS2015_FSharp_Portable259_Library && msbuild) &&
++(cd Sample_MonoDevelop_3_2_8_Console && xbuild) &&
++#(cd Sample_VS2010_FSharp_ConsoleApp_net35 && xbuild) &&
++(cd Sample_VS2010_FSharp_ConsoleApp_net40 && xbuild) &&
++#(cd Sample_VS2012_FSharp_ConsoleApp_net35 && xbuild) &&
++(cd Sample_VS2012_FSharp_ConsoleApp_net40 && xbuild) &&
++(cd Sample_VS2012_FSharp_ConsoleApp_net45 && xbuild) &&
++(cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource && xbuild) &&
++(cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource_using_bootstrap && xbuild) &&
++(cd Sample_VS2012_FSharp_Portable_Library && xbuild) &&
++(cd Sample_VS2013_FSharp_ConsoleApp_net40 && xbuild) &&
++(cd Sample_VS2013_FSharp_ConsoleApp_net45 && xbuild) &&
++(cd Sample_VS2013_FSharp_ConsoleApp_net451 && xbuild) &&
++(cd Sample_VS2013_FSharp_Library_net40 && xbuild) &&
++(cd Sample_VS2013_FSharp_Library_net45 && xbuild) &&
++(cd Sample_VS2013_FSharp_Library_net451 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net40 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net45 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_Legacy_net451 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_net45 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_net451 && xbuild) &&
++(cd Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013 && xbuild) &&
++(cd Sample_VS2012_FSharp_Portable_Library_upgraded_2013 && xbuild) &&
++(cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile78 && xbuild) &&
++(cd Sample_VS2015_FSharp_Console_App_net40 && xbuild) &&
++(cd Sample_VS2015_FSharp_Console_App_net45 && xbuild) &&
++(cd Sample_VS2015_FSharp_Console_App_net451 && xbuild) &&
++(cd Sample_VS2015_FSharp_Console_App_net452 && xbuild) &&
++(cd Sample_VS2015_FSharp_Library_net40 && xbuild) &&
++(cd Sample_VS2015_FSharp_Library_net45 && xbuild) &&
++(cd Sample_VS2015_FSharp_Library_net45_fsharp_30 && xbuild) &&
++(cd Sample_VS2015_FSharp_Library_net45_fsharp_31 && xbuild) &&
++(cd Sample_VS2015_FSharp_Portable7_Library && xbuild) &&
++(cd Sample_VS2015_FSharp_Portable47_Library && xbuild) &&
++(cd Sample_VS2015_FSharp_Portable78_Library && xbuild) &&
++(cd Sample_VS2015_FSharp_Portable259_Library && xbuild) &&
+ echo "all projects built successfully"
+ 
+ 
+ # Profile 259 not yet available on CI server Mono installation:
+-# (cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile259 && msbuild)
++# (cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile259 && xbuild)
+ 
+ 
