@@ -172,3 +172,15 @@
 +# (cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile259 && xbuild)
  
  
+diff --git a/mono/config.make b/mono/config.make
+index 00bd4a091..2d60fdcd4 100644
+--- a/mono/config.make
++++ b/mono/config.make
+@@ -21,6 +21,7 @@ debugvars:
+ 	@echo monolibdir=$(monolibdir)
+ 	@echo monobindir=$(monobindir)
+ 
++TargetFramework = net40
+ TargetDotnetProfile = net40
+ Configuration = Release
+ DISTVERSION = 201011
