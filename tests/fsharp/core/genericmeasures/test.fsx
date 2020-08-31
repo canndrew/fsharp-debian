@@ -3,6 +3,7 @@ module Core_genericMeasures
 #else
 module Core_genericMeasures =
 #endif
+
     [<AllowNullLiteral>]
     type C<'T> = class end
     
@@ -57,7 +58,7 @@ module Core_genericMeasures =
         T.Baz()
     
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
     let RUN() = RunAll(); []
 #else
     RunAll();

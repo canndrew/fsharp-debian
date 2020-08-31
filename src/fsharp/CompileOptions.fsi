@@ -1,15 +1,10 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 module internal Microsoft.FSharp.Compiler.CompileOptions
 
-open Internal.Utilities
 open Microsoft.FSharp.Compiler 
-open Microsoft.FSharp.Compiler.AbstractIL 
-open Microsoft.FSharp.Compiler.AbstractIL.IL 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler.CompileOps
-open Microsoft.FSharp.Compiler.ErrorLogger
-open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Import
 open Microsoft.FSharp.Compiler.Optimizer
@@ -58,7 +53,6 @@ val FilterCompilerOptionBlock : (CompilerOption -> bool) -> CompilerOptionBlock 
 /// Parse and process a set of compiler options
 val ParseCompilerOptions : (string -> unit) * CompilerOptionBlock list * string list -> unit
 
-
 //----------------------------------------------------------------------------
 // Compiler Options
 //--------------------------------------------------------------------------
@@ -69,31 +63,33 @@ val GetCoreFscCompilerOptions     : TcConfigBuilder -> CompilerOptionBlock list
 val GetCoreFsiCompilerOptions     : TcConfigBuilder -> CompilerOptionBlock list
 val GetCoreServiceCompilerOptions : TcConfigBuilder -> CompilerOptionBlock list
 
+/// Apply args to TcConfigBuilder and return new list of source files
+val ApplyCommandLineArgs: tcConfigB: TcConfigBuilder * sourceFiles: string list * argv: string list -> string list
+
 // Expose the "setters" for some user switches, to enable setting of defaults
 val SetOptimizeSwitch : TcConfigBuilder -> OptionSwitch -> unit
 val SetTailcallSwitch : TcConfigBuilder -> OptionSwitch -> unit
 val SetDebugSwitch    : TcConfigBuilder -> string option -> OptionSwitch -> unit
 val PrintOptionInfo   : TcConfigBuilder -> unit
+val SetTargetProfile  : TcConfigBuilder -> string -> unit
 
 val GetGeneratedILModuleName : CompilerTarget -> string -> string
 
-#if NO_COMPILER_BACKEND
-#else
 val GetInitialOptimizationEnv : TcImports * TcGlobals -> IncrementalOptimizationEnv
 val AddExternalCcuToOpimizationEnv : TcGlobals -> IncrementalOptimizationEnv -> ImportedAssembly -> IncrementalOptimizationEnv
-val ApplyAllOptimizations : TcConfig * TcGlobals * ConstraintSolver.TcValF * string * ImportMap * bool * IncrementalOptimizationEnv * CcuThunk * TypedAssembly -> TypedAssembly * Optimizer.LazyModuleInfo * IncrementalOptimizationEnv
+val ApplyAllOptimizations : TcConfig * TcGlobals * ConstraintSolver.TcValF * string * ImportMap * bool * IncrementalOptimizationEnv * CcuThunk * TypedImplFile list -> TypedAssemblyAfterOptimization * Optimizer.LazyModuleInfo * IncrementalOptimizationEnv 
 
 val CreateIlxAssemblyGenerator : TcConfig * TcImports * TcGlobals * ConstraintSolver.TcValF * CcuThunk -> IlxGen.IlxAssemblyGenerator
 
-val GenerateIlxCode : IlxGen.IlxGenBackend * bool * bool * TcConfig * TypeChecker.TopAttribs * TypedAssembly * string * bool * IlxGen.IlxAssemblyGenerator -> IlxGen.IlxGenResults
-#endif
+val GenerateIlxCode : IlxGen.IlxGenBackend * isInteractiveItExpr:bool * isInteractiveOnMono:bool * TcConfig * TypeChecker.TopAttribs * TypedAssemblyAfterOptimization * fragName:string * IlxGen.IlxAssemblyGenerator -> IlxGen.IlxGenResults
 
 // Used during static linking
-val NormalizeAssemblyRefs : TcImports -> (AbstractIL.IL.ILScopeRef -> AbstractIL.IL.ILScopeRef)
+val NormalizeAssemblyRefs : CompilationThreadToken * TcImports -> (AbstractIL.IL.ILScopeRef -> AbstractIL.IL.ILScopeRef)
 
 // Miscellany
 val ignoreFailureOnMono1_1_16 : (unit -> unit) -> unit
 val mutable enableConsoleColoring : bool
+val DoWithColor : System.ConsoleColor -> (unit -> 'a) -> 'a
 val DoWithErrorColor : bool -> (unit -> 'a) -> 'a
 val ReportTime : TcConfig -> string -> unit
 val GetAbbrevFlagSet : TcConfigBuilder -> bool -> Set<string>

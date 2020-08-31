@@ -23,6 +23,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013.xml</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -34,6 +35,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013.xml</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>
@@ -43,7 +45,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="FSharp.Core">
-      <HintPath>..\..\..\..\..\..\fsharp\lib\debug\4.0\FSharp.Core.dll</HintPath>
+      <HintPath>..\..\..\packages\Microsoft.Portable.FSharp.Core.10.1.0\lib\profiles\portable-net45+sl5+netcore45\FSharp.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

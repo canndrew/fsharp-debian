@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 /// Defines derived expression manipulation and construction functions.
 module internal Microsoft.FSharp.Compiler.Tastops 
@@ -19,7 +19,7 @@ open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Compiler.Layout
 open Microsoft.FSharp.Compiler.Lib
 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 open Microsoft.FSharp.Compiler.ExtensionTyping
 #endif
 
@@ -29,38 +29,54 @@ open Microsoft.FSharp.Compiler.ExtensionTyping
 
 type Erasure = EraseAll | EraseMeasures | EraseNone
 
+/// Check the equivalence of two types up to an erasure flag
 val typeEquivAux    : Erasure -> TcGlobals  -> TType          -> TType         -> bool
+
+/// Check the equivalence of two types 
 val typeEquiv       :            TcGlobals  -> TType          -> TType         -> bool
-val measureEquiv    :            TcGlobals  -> MeasureExpr  -> MeasureExpr -> bool
+
+/// Check the equivalence of two units-of-measure
+val measureEquiv    :            TcGlobals  -> Measure  -> Measure -> bool
+
+/// Reduce a type to its more anonical form subject to an erasure flag, inference equations and abbreviations
 val stripTyEqnsWrtErasure: Erasure -> TcGlobals -> TType -> TType
 
 //-------------------------------------------------------------------------
 // Build common types
 //------------------------------------------------------------------------- 
 
+/// Build a function type
 val mkFunTy : TType -> TType -> TType
+
+/// Build a function type
 val ( --> ) : TType -> TType -> TType
-val tryMkForallTy : Typars -> TType -> TType
+
+/// Build a type-forall anonymous generic type if necessary
+val mkForallTyIfNeeded : Typars -> TType -> TType
+
 val ( +-> ) : Typars -> TType -> TType
-val mkTupleTy : TTypes -> TType
+
+/// Build a curried function type
 val mkIteratedFunTy : TTypes -> TType -> TType
+
+/// Get the natural type of a single argument amongst a set of curried arguments
 val typeOfLambdaArg : range -> Val list -> TType
+
+/// Get the curried type corresponding to a lambda 
 val mkMultiLambdaTy : range -> Val list -> TType -> TType
+
+/// Get the curried type corresponding to a lambda 
 val mkLambdaTy : Typars -> TTypes -> TType -> TType
 
-//-------------------------------------------------------------------------
-// Module publication, used while compiling fslib.
-//------------------------------------------------------------------------- 
-
+/// Module publication, used while compiling fslib.
 val ensureCcuHasModuleOrNamespaceAtPath : CcuThunk -> Ident list -> CompilationPath -> XmlDoc -> unit 
 
-//-------------------------------------------------------------------------
-// Miscellaneous accessors on terms
-//------------------------------------------------------------------------- 
-
+/// Ignore 'Expr.Link' in an expression
 val stripExpr : Expr -> Expr
 
-val valsOfBinds : Bindings -> FlatVals 
+/// Get the values for a set of bindings
+val valsOfBinds : Bindings -> Vals 
+val (|ExprValWithPossibleTypeInst|_|) : Expr -> (ValRef * ValUseFlag * TType list * range) option
 
 //-------------------------------------------------------------------------
 // Build decision trees imperatively
@@ -136,18 +152,19 @@ val mkMultiLambdaBind : Val -> SequencePointInfoForBinding -> range -> Typars ->
 val mkCompGenBind : Val -> Expr -> Binding
 val mkCompGenBinds : Val list -> Exprs -> Bindings
 val mkCompGenLet : range -> Val -> Expr -> Expr -> Expr
+val mkCompGenLetIn: range -> string -> TType -> Expr -> (Val * Expr -> Expr) -> Expr
 
 // Invisible bindings are never given a sequence point and should never have side effects
 val mkInvisibleLet : range -> Val -> Expr -> Expr -> Expr
 val mkInvisibleBind : Val -> Expr -> Binding
-val mkInvisibleFlatBindings : FlatVals -> FlatExprs -> Bindings
+val mkInvisibleBinds : Vals -> Exprs -> Bindings
 val mkLetRecBinds : range -> Bindings -> Expr -> Expr
  
 //-------------------------------------------------------------------------
 // Generalization/inference helpers
 //------------------------------------------------------------------------- 
  
-/// TypeSchme (generalizedTypars, tauTy)
+/// TypeScheme (generalizedTypars, tauTy)
 ///
 ///    generalizedTypars -- the truly generalized type parameters 
 ///    tauTy  --  the body of the generalized type. A 'tau' type is one with its type parameters stripped off.
@@ -163,6 +180,9 @@ val isBeingGeneralized : Typar -> TypeScheme -> bool
 val mkLazyAnd  : TcGlobals -> range -> Expr -> Expr -> Expr
 val mkLazyOr   : TcGlobals -> range -> Expr -> Expr -> Expr
 val mkByrefTy  : TcGlobals -> TType -> TType
+val mkByrefTyWithInference  : TcGlobals -> TType -> TType -> TType
+val mkInByrefTy  : TcGlobals -> TType -> TType
+val mkOutByrefTy  : TcGlobals -> TType -> TType
 
 //-------------------------------------------------------------------------
 // Make construction operations
@@ -180,32 +200,79 @@ val mkReraiseLibCall : TcGlobals -> TType -> range -> Expr
 // Make projection operations
 //------------------------------------------------------------------------- 
  
-val mkTupleFieldGet                : Expr                  * TypeInst * int         * range -> Expr
-val mkRecdFieldGetViaExprAddr      : Expr * RecdFieldRef   * TypeInst               * range -> Expr
-val mkRecdFieldGetAddrViaExprAddr  : Expr * RecdFieldRef   * TypeInst               * range -> Expr
-val mkStaticRecdFieldGet           :        RecdFieldRef   * TypeInst               * range -> Expr
-val mkStaticRecdFieldSet           :        RecdFieldRef   * TypeInst * Expr        * range -> Expr
-val mkStaticRecdFieldGetAddr       :        RecdFieldRef   * TypeInst               * range -> Expr
-val mkRecdFieldSetViaExprAddr      : Expr * RecdFieldRef   * TypeInst * Expr        * range -> Expr
-val mkUnionCaseTagGet              : Expr * TyconRef       * TypeInst               * range -> Expr
+val mkTupleFieldGet                : TcGlobals -> TupInfo * Expr * TypeInst * int * range -> Expr
+val mkRecdFieldGetViaExprAddr      :                  Expr * RecdFieldRef   * TypeInst               * range -> Expr
+val mkRecdFieldGetAddrViaExprAddr  : readonly: bool * Expr * RecdFieldRef   * TypeInst               * range -> Expr
+val mkStaticRecdFieldGet           :                         RecdFieldRef   * TypeInst               * range -> Expr
+val mkStaticRecdFieldSet           :                         RecdFieldRef   * TypeInst * Expr        * range -> Expr
+val mkStaticRecdFieldGetAddr       : readonly: bool *        RecdFieldRef   * TypeInst               * range -> Expr
+val mkRecdFieldSetViaExprAddr      :                  Expr * RecdFieldRef   * TypeInst * Expr        * range -> Expr
+val mkUnionCaseTagGetViaExprAddr   : Expr * TyconRef       * TypeInst               * range -> Expr
+
+/// Make a 'TOp.UnionCaseProof' expression, which proves a union value is over a particular case (used only for ref-unions, not struct-unions)
 val mkUnionCaseProof               : Expr * UnionCaseRef   * TypeInst               * range -> Expr
-val mkUnionCaseFieldGetProven      : Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
-val mkUnionCaseFieldGetUnproven    : Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
-val mkExnCaseFieldGet              : Expr * TyconRef               * int         * range -> Expr
+
+/// Build a 'TOp.UnionCaseFieldGet' expression for something we've already determined to be a particular union case. For ref-unions,
+/// the input expression has 'TType_ucase', which is an F# compiler internal "type" corresponding to the union case. For struct-unions,
+/// the input should be the address of the expression.
+val mkUnionCaseFieldGetProvenViaExprAddr : Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
+
+/// Build a 'TOp.UnionCaseFieldGetAddr' expression for a field of a union when we've already determined the value to be a particular union case. For ref-unions,
+/// the input expression has 'TType_ucase', which is an F# compiler internal "type" corresponding to the union case. For struct-unions,
+/// the input should be the address of the expression.
+val mkUnionCaseFieldGetAddrProvenViaExprAddr  : readonly: bool * Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
+
+/// Build a 'TOp.UnionCaseFieldGetAddr' expression for a field of a union when we've already determined the value to be a particular union case. For ref-unions,
+/// the input expression has 'TType_ucase', which is an F# compiler internal "type" corresponding to the union case. For struct-unions,
+/// the input should be the address of the expression.
+val mkUnionCaseFieldGetUnprovenViaExprAddr : Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
+
+/// Build a 'TOp.UnionCaseFieldSet' expression. For ref-unions, the input expression has 'TType_ucase', which is 
+/// an F# compiler internal "type" corresponding to the union case. For struct-unions,
+/// the input should be the address of the expression.
 val mkUnionCaseFieldSet            : Expr * UnionCaseRef   * TypeInst * int  * Expr * range -> Expr
+
+/// Like mkUnionCaseFieldGetUnprovenViaExprAddr, but for struct-unions, the input should be a copy of the expression.
+val mkUnionCaseFieldGetUnproven    : TcGlobals -> Expr * UnionCaseRef   * TypeInst * int         * range -> Expr
+
+val mkExnCaseFieldGet              : Expr * TyconRef               * int         * range -> Expr
 val mkExnCaseFieldSet              : Expr * TyconRef               * int  * Expr * range -> Expr
+
+val mkArrayElemAddress : TcGlobals -> readonly: bool * ILReadonly * bool * ILArrayShape * TType * Expr list * range -> Expr
 
 //-------------------------------------------------------------------------
 // Compiled view of tuples
 //------------------------------------------------------------------------- 
  
+/// The largest tuple before we start encoding, i.e. 7
 val maxTuple : int
+
+/// The number of fields in the largest tuple before we start encoding, i.e. 7
 val goodTupleFields : int
+
+/// Check if a TyconRef is for a .NET tuple type. Currently this includes Tuple`1 even though
+/// that' not really part of the target set of TyconRef used to represent F# tuples.
 val isCompiledTupleTyconRef : TcGlobals -> TyconRef -> bool
-val mkCompiledTupleTyconRef : TcGlobals -> 'a list -> TyconRef
-val mkCompiledTupleTy : TcGlobals -> TTypes -> TType
-val mkCompiledTuple : TcGlobals -> TTypes * Exprs * range -> TyconRef * TTypes * Exprs * range
-val mkGetTupleItemN : TcGlobals -> range -> int -> ILType -> Expr -> TType -> Expr
+
+/// Get a TyconRef for a .NET tuple type
+val mkCompiledTupleTyconRef : TcGlobals -> bool -> int -> TyconRef
+
+/// Convert from F# tuple types to .NET tuple types.
+val mkCompiledTupleTy : TcGlobals -> bool -> TTypes -> TType
+
+/// Convert from F# tuple creation expression to .NET tuple creation expressions
+val mkCompiledTuple : TcGlobals -> bool -> TTypes * Exprs * range -> TyconRef * TTypes * Exprs * range
+
+/// Make a TAST expression representing getting an item fromm a tuple
+val mkGetTupleItemN : TcGlobals -> range -> int -> ILType -> bool -> Expr -> TType -> Expr
+
+/// Evaluate the TupInfo to work out if it is a struct or a ref.  Currently this is very simple
+/// but TupInfo may later be used carry variables that infer structness.
+val evalTupInfoIsStruct : TupInfo -> bool
+
+/// If it is a tuple type, ensure it's outermost type is a .NET tuple type, otherwise leave unchanged
+val convertToTypeWithMetadataIfPossible : TcGlobals -> TType -> TType
+
 
 //-------------------------------------------------------------------------
 // Take the address of an expression, or force it into a mutable local. Any allocated
@@ -215,8 +282,9 @@ val mkGetTupleItemN : TcGlobals -> range -> int -> ILType -> Expr -> TType -> Ex
 //------------------------------------------------------------------------- 
 
 exception DefensiveCopyWarning of string * range 
-type Mutates = DefinitelyMutates | PossiblyMutates | NeverMutates
-val mkExprAddrOfExpr : TcGlobals -> bool -> bool -> Mutates -> Expr -> ValRef option -> range -> (Expr -> Expr) * Expr
+type Mutates = AddressOfOp | DefinitelyMutates | PossiblyMutates | NeverMutates
+val mkExprAddrOfExprAux : TcGlobals -> bool -> bool -> Mutates -> Expr -> ValRef option -> range -> (Val * Expr) option * Expr * bool * bool
+val mkExprAddrOfExpr : TcGlobals -> bool -> bool -> Mutates -> Expr -> ValRef option -> range -> (Expr -> Expr) * Expr * bool * bool
 
 //-------------------------------------------------------------------------
 // Tables keyed on values and/or type parameters
@@ -247,40 +315,64 @@ type ValHash<'T> =
 /// Maps Val's to list of T based on stamp keys
 [<Struct; NoEquality; NoComparison>]
 type ValMultiMap<'T> =
+
+    member ContainsKey : Val -> bool
+
     member Find : Val -> 'T list
+
     member Add : Val * 'T -> ValMultiMap<'T>
+
     member Remove : Val -> ValMultiMap<'T>
+
     member Contents : StampMap<'T list>
+
     static member Empty : ValMultiMap<'T>
 
 [<Sealed>]
 /// Maps Typar to T based on stamp keys
 type TyparMap<'T>  =
+
     member Item : Typar -> 'T with get
+
     member ContainsKey : Typar -> bool
+
+    member TryFind : Typar -> 'T option
+
     member Add : Typar * 'T -> TyparMap<'T> 
+
     static member Empty : TyparMap<'T> 
 
 [<NoEquality; NoComparison;Sealed>]
 /// Maps TyconRef to T based on stamp keys
 type TyconRefMap<'T> =
+
     member Item : TyconRef -> 'T with get
+
     member TryFind : TyconRef -> 'T option
+
     member ContainsKey : TyconRef -> bool
+
     member Add : TyconRef -> 'T -> TyconRefMap<'T>
+
     member Remove : TyconRef -> TyconRefMap<'T>
+
     member IsEmpty : bool
+
     static member Empty : TyconRefMap<'T>
+
     static member OfList : (TyconRef * 'T) list -> TyconRefMap<'T>
 
 /// Maps TyconRef to list of T based on stamp keys
 [<Struct; NoEquality; NoComparison>]
 type TyconRefMultiMap<'T> =
-    member Find : TyconRef -> 'T list
-    member Add : TyconRef * 'T -> TyconRefMultiMap<'T>
-    static member Empty : TyconRefMultiMap<'T>
-    static member OfList : (TyconRef * 'T) list -> TyconRefMultiMap<'T>
 
+    member Find : TyconRef -> 'T list
+
+    member Add : TyconRef * 'T -> TyconRefMultiMap<'T>
+
+    static member Empty : TyconRefMultiMap<'T>
+
+    static member OfList : (TyconRef * 'T) list -> TyconRefMultiMap<'T>
 
 //-------------------------------------------------------------------------
 // Orderings on Tycon, Val, RecdFieldRef, Typar
@@ -311,7 +403,8 @@ type ValRemap = ValMap<ValRef>
 type Remap =
     { tpinst : TyparInst;
       valRemap: ValRemap;
-      tyconRefRemap : TyconRefRemap }
+      tyconRefRemap : TyconRefRemap;
+      removeTraitSolutions: bool }
 
     static member Empty : Remap
 
@@ -343,7 +436,7 @@ val mkTyparToTyparRenaming : Typars -> Typars -> TyparInst * TTypes
 
 val reduceTyconRefAbbrev : TyconRef -> TypeInst -> TType
 val reduceTyconRefMeasureableOrProvided : TcGlobals -> TyconRef -> TypeInst -> TType
-val reduceTyconRefAbbrevMeasureable : TyconRef -> MeasureExpr
+val reduceTyconRefAbbrevMeasureable : TyconRef -> Measure
 
 /// set bool to 'true' to allow shortcutting of type parameter equation chains during stripping 
 val stripTyEqnsA : TcGlobals -> bool -> TType -> TType 
@@ -366,24 +459,30 @@ val recdFieldTysOfExnDefRef : TyconRef -> TType list
 // inference equations, i.e. are "stripped"
 //------------------------------------------------------------------------- 
 
-val destForallTy     : TcGlobals -> TType -> Typars * TType
-val destFunTy        : TcGlobals -> TType -> TType * TType
-val destTupleTy      : TcGlobals -> TType -> TTypes
-val destTyparTy      : TcGlobals -> TType -> Typar
-val destAnyParTy     : TcGlobals -> TType -> Typar
-val destMeasureTy    : TcGlobals -> TType -> MeasureExpr
-val tryDestForallTy  : TcGlobals -> TType -> Typars * TType
+val destForallTy      : TcGlobals -> TType -> Typars * TType
+val destFunTy         : TcGlobals -> TType -> TType * TType
+val destAnyTupleTy    : TcGlobals -> TType -> TupInfo * TTypes
+val destRefTupleTy    : TcGlobals -> TType -> TTypes
+val destStructTupleTy : TcGlobals -> TType -> TTypes
+val destTyparTy       : TcGlobals -> TType -> Typar
+val destAnyParTy      : TcGlobals -> TType -> Typar
+val destMeasureTy     : TcGlobals -> TType -> Measure
+val tryDestForallTy   : TcGlobals -> TType -> Typars * TType
 
 val isFunTy            : TcGlobals -> TType -> bool
 val isForallTy         : TcGlobals -> TType -> bool
-val isTupleTy          : TcGlobals -> TType -> bool
-val isTupleStructTy    : TcGlobals -> TType -> bool
+val isAnyTupleTy       : TcGlobals -> TType -> bool
+val isRefTupleTy       : TcGlobals -> TType -> bool
+val isStructTupleTy    : TcGlobals -> TType -> bool
 val isUnionTy          : TcGlobals -> TType -> bool
 val isReprHiddenTy     : TcGlobals -> TType -> bool
 val isFSharpObjModelTy : TcGlobals -> TType -> bool
 val isRecdTy           : TcGlobals -> TType -> bool
+val isFSharpStructOrEnumTy : TcGlobals -> TType -> bool
+val isFSharpEnumTy     : TcGlobals -> TType -> bool
 val isTyparTy          : TcGlobals -> TType -> bool
 val isAnyParTy         : TcGlobals -> TType -> bool
+val tryAnyParTy        : TcGlobals -> TType -> Typar option
 val isMeasureTy        : TcGlobals -> TType -> bool
 
 val mkAppTy : TyconRef -> TypeInst -> TType
@@ -394,8 +493,9 @@ val isProvenUnionCaseTy : TType -> bool
 val isAppTy        : TcGlobals -> TType -> bool
 val destAppTy      : TcGlobals -> TType -> TyconRef * TypeInst
 val tcrefOfAppTy   : TcGlobals -> TType -> TyconRef
-val tyconOfAppTy   : TcGlobals -> TType -> Tycon
 val tryDestAppTy   : TcGlobals -> TType -> TyconRef option
+val tryDestTyparTy : TcGlobals -> TType -> Typar option
+val tryDestFunTy : TcGlobals -> TType -> (TType * TType) option
 val argsOfAppTy    : TcGlobals -> TType -> TypeInst
 val mkInstForAppTy  : TcGlobals -> TType -> TyparInst
 
@@ -410,7 +510,8 @@ val stripFunTyN    : TcGlobals -> int -> TType -> TType list * TType
 
 val applyForallTy : TcGlobals -> TType -> TypeInst -> TType
 
-val tryDestTupleTy : TcGlobals -> TType -> TType list
+val tryDestAnyTupleTy : TcGlobals -> TType -> TupInfo * TType list
+val tryDestRefTupleTy : TcGlobals -> TType -> TType list
 
 //-------------------------------------------------------------------------
 // Compute actual types of union cases and fields given an instantiation 
@@ -463,6 +564,7 @@ val emptyFreeTycons : FreeTycons
 val unionFreeTycons : FreeTycons -> FreeTycons -> FreeTycons
 
 val emptyFreeTyvars : FreeTyvars
+val isEmptyFreeTyvars : FreeTyvars -> bool
 val unionFreeTyvars : FreeTyvars -> FreeTyvars -> FreeTyvars
 
 val emptyFreeLocals : FreeLocals
@@ -492,6 +594,7 @@ val freeInTypeLeftToRight : TcGlobals -> bool -> TType -> Typars
 val freeInTypesLeftToRight : TcGlobals -> bool -> TType list -> Typars
 val freeInTypesLeftToRightSkippingConstraints : TcGlobals -> TType list -> Typars
 
+val freeInModuleTy: ModuleOrNamespaceType -> FreeTyvars
 
 val isDimensionless : TcGlobals -> TType -> bool
 
@@ -535,13 +638,13 @@ val getErasedTypes            : TcGlobals -> TType -> TType list
 // Unit operations
 //------------------------------------------------------------------------- 
 
-val MeasurePower : MeasureExpr -> int -> MeasureExpr
-val ListMeasureVarOccsWithNonZeroExponents : MeasureExpr -> (Typar * Rational) list
-val ListMeasureConOccsWithNonZeroExponents : TcGlobals -> bool -> MeasureExpr -> (TyconRef * Rational) list
-val ProdMeasures : MeasureExpr list -> MeasureExpr
-val MeasureVarExponent : Typar -> MeasureExpr -> Rational
-val MeasureConExponent : TcGlobals -> bool -> TyconRef -> MeasureExpr -> Rational
-val normalizeMeasure : TcGlobals -> MeasureExpr -> MeasureExpr
+val MeasurePower : Measure -> int -> Measure
+val ListMeasureVarOccsWithNonZeroExponents : Measure -> (Typar * Rational) list
+val ListMeasureConOccsWithNonZeroExponents : TcGlobals -> bool -> Measure -> (TyconRef * Rational) list
+val ProdMeasures : Measure list -> Measure
+val MeasureVarExponent : Typar -> Measure -> Rational
+val MeasureExprConExponent : TcGlobals -> bool -> TyconRef -> Measure -> Rational
+val normalizeMeasure : TcGlobals -> Measure -> Measure
 
 
 //-------------------------------------------------------------------------
@@ -577,11 +680,18 @@ module PrettyTypes =
     val NeedsPrettyTyparName : Typar -> bool
     val NewPrettyTypars : TyparInst -> Typars -> string list -> Typars * TyparInst
     val PrettyTyparNames : (Typar -> bool) -> string list -> Typars -> string list
-    val PrettifyTypes1 : TcGlobals -> TType -> TyparInst * TType * TyparConstraintsWithTypars
-    val PrettifyTypes2 : TcGlobals -> TType * TType -> TyparInst * (TType * TType) * TyparConstraintsWithTypars
-    val PrettifyTypesN : TcGlobals -> TType list -> TyparInst * TType list * TyparConstraintsWithTypars
-    val PrettifyTypesN1 : TcGlobals -> UncurriedArgInfos * TType -> TyparInst * (UncurriedArgInfos * TType) * TyparConstraintsWithTypars
-    val PrettifyTypesNM1 : TcGlobals -> TType list * CurriedArgInfos * TType -> TyparInst * (TType list * CurriedArgInfos * TType) * TyparConstraintsWithTypars
+    val PrettifyType : TcGlobals -> TType -> TType * TyparConstraintsWithTypars
+    val PrettifyInstAndTyparsAndType : TcGlobals -> TyparInst * Typars * TType -> (TyparInst * Typars * TType) * TyparConstraintsWithTypars
+    val PrettifyTypePair : TcGlobals -> TType * TType -> (TType * TType) * TyparConstraintsWithTypars
+    val PrettifyTypes : TcGlobals -> TTypes -> TTypes * TyparConstraintsWithTypars
+    val PrettifyInst : TcGlobals -> TyparInst -> TyparInst * TyparConstraintsWithTypars
+    val PrettifyInstAndType : TcGlobals -> TyparInst * TType -> (TyparInst * TType) * TyparConstraintsWithTypars
+    val PrettifyInstAndTypes : TcGlobals -> TyparInst * TTypes -> (TyparInst * TTypes) * TyparConstraintsWithTypars
+    val PrettifyInstAndSig : TcGlobals -> TyparInst * TTypes * TType -> (TyparInst * TTypes * TType) * TyparConstraintsWithTypars
+    val PrettifyCurriedTypes : TcGlobals -> TType list list -> TType list list * TyparConstraintsWithTypars
+    val PrettifyCurriedSigTypes : TcGlobals -> TType list list * TType -> (TType list list * TType) * TyparConstraintsWithTypars
+    val PrettifyInstAndUncurriedSig : TcGlobals -> TyparInst * UncurriedArgInfos * TType -> (TyparInst * UncurriedArgInfos * TType) * TyparConstraintsWithTypars
+    val PrettifyInstAndCurriedSig : TcGlobals -> TyparInst * TTypes * CurriedArgInfos * TType -> (TyparInst * TTypes * CurriedArgInfos * TType) * TyparConstraintsWithTypars
 
 [<NoEquality; NoComparison>]
 type DisplayEnv = 
@@ -605,7 +715,7 @@ type DisplayEnv =
       showConstraintTyparAnnotations:bool;
       abbreviateAdditionalConstraints: bool;
       showTyparDefaultConstraints: bool
-      g: TcGlobals 
+      g: TcGlobals
       contextAccessibility: Accessibility
       generatedValueLayout:(Val -> layout option) }
     member SetOpenPaths: string list list -> DisplayEnv
@@ -615,13 +725,17 @@ type DisplayEnv =
     member AddOpenPath : string list  -> DisplayEnv
     member AddOpenModuleOrNamespace : ModuleOrNamespaceRef   -> DisplayEnv
 
+val tagEntityRefName: xref: EntityRef -> name: string -> StructuredFormat.TaggedText
 
 /// Return the full text for an item as we want it displayed to the user as a fully qualified entity
 val fullDisplayTextOfModRef : ModuleOrNamespaceRef -> string
 val fullDisplayTextOfParentOfModRef : ModuleOrNamespaceRef -> string option
 val fullDisplayTextOfValRef   : ValRef -> string
+val fullDisplayTextOfValRefAsLayout   : ValRef -> StructuredFormat.Layout
 val fullDisplayTextOfTyconRef  : TyconRef -> string
+val fullDisplayTextOfTyconRefAsLayout  : TyconRef -> StructuredFormat.Layout
 val fullDisplayTextOfExnRef  : TyconRef -> string
+val fullDisplayTextOfExnRefAsLayout  : TyconRef -> StructuredFormat.Layout
 val fullDisplayTextOfUnionCaseRef  : UnionCaseRef -> string
 val fullDisplayTextOfRecdFieldRef  : RecdFieldRef -> string
 
@@ -692,9 +806,12 @@ val tyOfExpr : TcGlobals -> Expr -> TType
 // Top expressions to implement top types
 //------------------------------------------------------------------------- 
 
+[<RequireQualifiedAccess>]
+type AllowTypeDirectedDetupling = Yes | No
+
 val stripTopLambda : Expr * TType -> Typars * Val list list * Expr * TType
-val InferArityOfExpr : TcGlobals -> TType -> Attribs list list -> Attribs -> Expr -> ValReprInfo
-val InferArityOfExprBinding : TcGlobals -> Val -> Expr -> ValReprInfo
+val InferArityOfExpr : TcGlobals -> AllowTypeDirectedDetupling -> TType -> Attribs list list -> Attribs -> Expr -> ValReprInfo
+val InferArityOfExprBinding : TcGlobals -> AllowTypeDirectedDetupling -> Val -> Expr -> ValReprInfo
 
 //-------------------------------------------------------------------------
 //  Copy expressions and types
@@ -745,14 +862,15 @@ type SignatureHidingInfo =
       mhiVals       : Zset<Val>; 
       mhiRecdFields : Zset<RecdFieldRef>;
       mhiUnionCases : Zset<UnionCaseRef> }
+    static member Empty : SignatureHidingInfo
 
 val ComputeRemappingFromInferredSignatureToExplicitSignature : TcGlobals -> ModuleOrNamespaceType -> ModuleOrNamespaceType -> SignatureRepackageInfo * SignatureHidingInfo
 val ComputeRemappingFromImplementationToSignature : TcGlobals -> ModuleOrNamespaceExpr -> ModuleOrNamespaceType -> SignatureRepackageInfo * SignatureHidingInfo
-val ComputeHidingInfoAtAssemblyBoundary : ModuleOrNamespaceType -> SignatureHidingInfo
+val ComputeHidingInfoAtAssemblyBoundary : ModuleOrNamespaceType -> SignatureHidingInfo -> SignatureHidingInfo
 val mkRepackageRemapping : SignatureRepackageInfo -> Remap 
 
 val wrapModuleOrNamespaceExprInNamespace : Ident -> CompilationPath -> ModuleOrNamespaceExpr -> ModuleOrNamespaceExpr
-val wrapModuleOrNamespaceTypeInNamespace : Ident -> CompilationPath -> ModuleOrNamespaceType -> ModuleOrNamespaceType 
+val wrapModuleOrNamespaceTypeInNamespace : Ident -> CompilationPath -> ModuleOrNamespaceType -> ModuleOrNamespaceType * ModuleOrNamespace  
 val wrapModuleOrNamespaceType : Ident -> CompilationPath -> ModuleOrNamespaceType -> ModuleOrNamespace
 
 val SigTypeOfImplFile : TypedImplFile -> ModuleOrNamespaceType
@@ -798,7 +916,7 @@ val mkAddrSet  : range -> ValRef -> Expr -> Expr
 /// *localv_ptr        
 val mkAddrGet  : range -> ValRef -> Expr
 /// &localv           
-val mkValAddr  : range -> ValRef -> Expr
+val mkValAddr  : range -> readonly: bool -> ValRef -> Expr
 
 //-------------------------------------------------------------------------
 // Note these take the address of the record expression if it is a struct, and
@@ -806,7 +924,6 @@ val mkValAddr  : range -> ValRef -> Expr
 //------------------------------------------------------------------------- 
 
 val mkRecdFieldGet : TcGlobals -> Expr * RecdFieldRef * TypeInst * range -> Expr
-val mkRecdFieldSet : TcGlobals -> Expr * RecdFieldRef * TypeInst * Expr * range -> Expr
 
 //-------------------------------------------------------------------------
 //  Get the targets used in a decision graph (for reporting warnings)
@@ -836,8 +953,8 @@ val IterateRecursiveFixups :
 // of tuple type. 
 //------------------------------------------------------------------------- 
 
-val MultiLambdaToTupledLambda: Val list -> Expr -> Val * Expr
-val AdjustArityOfLambdaBody          : TcGlobals -> int -> Val list -> Expr -> Val list * Expr
+val MultiLambdaToTupledLambda : TcGlobals -> Val list -> Expr -> Val * Expr
+val AdjustArityOfLambdaBody : TcGlobals -> int -> Val list -> Expr -> Val list * Expr
 
 //-------------------------------------------------------------------------
 // Make applications, doing beta reduction by introducing let-bindings
@@ -875,7 +992,7 @@ module DebugPrint =
     val tyconL : Tycon -> layout
     val decisionTreeL : DecisionTree -> layout
     val implFileL : TypedImplFile -> layout
-    val assemblyL : TypedAssembly -> layout
+    val implFilesL : TypedImplFile list -> layout
     val recdFieldRefL : RecdFieldRef -> layout
 
 //-------------------------------------------------------------------------
@@ -902,7 +1019,8 @@ val ExprStats : Expr -> string
 // Make some common types
 //------------------------------------------------------------------------- 
 
-val mkNativePtrType  : TcGlobals -> TType -> TType
+val mkNativePtrTy  : TcGlobals -> TType -> TType
+val mkVoidPtrTy  : TcGlobals -> TType
 val mkArrayType      : TcGlobals -> TType -> TType
 val isOptionTy     : TcGlobals -> TType -> bool
 val destOptionTy   : TcGlobals -> TType -> TType
@@ -940,9 +1058,9 @@ val mkPrintfFormatTy : TcGlobals -> TType -> TType -> TType -> TType -> TType ->
 //------------------------------------------------------------------------- 
 
 type TypeDefMetadata = 
-     | ILTypeMetadata of ILScopeRef * ILTypeDef
+     | ILTypeMetadata of TILObjectReprData
      | FSharpOrArrayOrByrefOrTupleOrExnTypeMetadata 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
      | ProvidedTypeMetadata of  TProvidedTypeInfo
 #endif
 
@@ -972,17 +1090,18 @@ val rankOfArrayTy : TcGlobals -> TType -> int
 
 val isInterfaceTyconRef                 : TyconRef -> bool
 
-val isDelegateTy           : TcGlobals -> TType -> bool
-val isInterfaceTy          : TcGlobals -> TType -> bool
-val isRefTy                : TcGlobals -> TType -> bool
-val isSealedTy             : TcGlobals -> TType -> bool
-val isComInteropTy         : TcGlobals -> TType -> bool
-val underlyingTypeOfEnumTy : TcGlobals -> TType -> TType
-val normalizeEnumTy        : TcGlobals -> TType -> TType
-val isStructTy             : TcGlobals -> TType -> bool
-val isUnmanagedTy          : TcGlobals -> TType -> bool
-val isClassTy              : TcGlobals -> TType -> bool
-val isEnumTy               : TcGlobals -> TType -> bool
+val isDelegateTy                 : TcGlobals -> TType -> bool
+val isInterfaceTy                : TcGlobals -> TType -> bool
+val isRefTy                      : TcGlobals -> TType -> bool
+val isSealedTy                   : TcGlobals -> TType -> bool
+val isComInteropTy               : TcGlobals -> TType -> bool
+val underlyingTypeOfEnumTy       : TcGlobals -> TType -> TType
+val normalizeEnumTy              : TcGlobals -> TType -> TType
+val isStructTy                   : TcGlobals -> TType -> bool
+val isUnmanagedTy                : TcGlobals -> TType -> bool
+val isClassTy                    : TcGlobals -> TType -> bool
+val isEnumTy                     : TcGlobals -> TType -> bool
+val isStructRecordOrUnionTyconTy : TcGlobals -> TType -> bool
 
 /// For "type Class as self", 'self' is fixed up after initialization. To support this,
 /// it is converted behind the scenes to a ref. This function strips off the ref and
@@ -1018,11 +1137,14 @@ val TypeHasDefaultValue : TcGlobals -> range -> TType -> bool
 
 val isAbstractTycon : Tycon -> bool
 
-val isUnionCaseAllocObservable : UnionCaseRef -> bool
-val isRecdOrUnionOrStructTyconRefAllocObservable : TcGlobals -> TyconRef -> bool
-val isExnAllocObservable : TyconRef -> bool 
+val isUnionCaseRefDefinitelyMutable : UnionCaseRef -> bool
+val isRecdOrUnionOrStructTyconRefDefinitelyMutable : TyconRef -> bool
+val isExnDefinitelyMutable : TyconRef -> bool 
 val isUnionCaseFieldMutable : TcGlobals -> UnionCaseRef -> int -> bool
 val isExnFieldMutable : TyconRef -> int -> bool
+val isRecdOrStructTyconRefReadOnly: TcGlobals -> range -> TyconRef -> bool
+val isRecdOrStructTyconRefAssumedImmutable: TcGlobals -> TyconRef -> bool
+val isRecdOrStructTyReadOnly: TcGlobals -> range -> TType -> bool
 
 val useGenuineField : Tycon -> RecdField -> bool 
 val ComputeFieldName : Tycon -> RecdField -> string
@@ -1107,9 +1229,17 @@ val isQuotedExprTy : TcGlobals -> TType -> bool
 val destQuotedExprTy : TcGlobals -> TType -> TType
 val mkQuotedExprTy : TcGlobals -> TType -> TType
 val mkRawQuotedExprTy : TcGlobals -> TType
-val mspec_Type_GetTypeFromHandle : ILGlobals ->  ILMethodSpec
-val fspec_Missing_Value : ILGlobals ->  ILFieldSpec
+
+//-------------------------------------------------------------------------
+// Primitives associated with IL code gen
+//------------------------------------------------------------------------- 
+
+val mspec_Type_GetTypeFromHandle : TcGlobals ->  ILMethodSpec
+val fspec_Missing_Value : TcGlobals ->  ILFieldSpec
+val mkInitializeArrayMethSpec: TcGlobals -> ILMethodSpec 
 val mkByteArrayTy : TcGlobals -> TType
+val mkInvalidCastExnNewobj: TcGlobals -> ILInstr
+
 
 //-------------------------------------------------------------------------
 // Construct calls to some intrinsic functions
@@ -1141,14 +1271,76 @@ val mkCallArrayGet           : TcGlobals -> range -> TType -> Expr -> Expr -> Ex
 val mkCallArray2DGet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr 
 val mkCallArray3DGet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr
 val mkCallArray4DGet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallArraySet           : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
+val mkCallArray2DSet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallArray3DSet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallArray4DSet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
+
+val mkCallHash               : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallBox                : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallIsNull             : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallIsNotNull          : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallRaise              : TcGlobals -> range -> TType -> Expr -> Expr
 
 val mkCallGenericComparisonWithComparerOuter : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericEqualityEROuter             : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
-val mkCallEqualsOperator                     : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
-val mkCallSubtractionOperator                : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 val mkCallGenericEqualityWithComparerOuter   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericHashWithComparerOuter       : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+
+val mkCallEqualsOperator                     : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallNotEqualsOperator                  : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallLessThanOperator                   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallLessThanOrEqualsOperator           : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallGreaterThanOperator                : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallGreaterThanOrEqualsOperator        : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+
+val mkCallAdditionOperator                   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallSubtractionOperator                : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallMultiplyOperator                   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallDivisionOperator                   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallModulusOperator                    : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallBitwiseAndOperator                 : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallBitwiseOrOperator                  : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallBitwiseXorOperator                 : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallShiftLeftOperator                  : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallShiftRightOperator                 : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+
+val mkCallUnaryNegOperator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallUnaryNotOperator                   : TcGlobals -> range -> TType -> Expr -> Expr
+
+val mkCallAdditionChecked                    : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallSubtractionChecked                 : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallMultiplyChecked                    : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallUnaryNegChecked                    : TcGlobals -> range -> TType -> Expr -> Expr
+
+val mkCallToByteChecked                      : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToSByteChecked                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt16Checked                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt16Checked                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToIntChecked                       : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt32Checked                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt32Checked                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt64Checked                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt64Checked                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToIntPtrChecked                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUIntPtrChecked                   : TcGlobals -> range -> TType -> Expr -> Expr
+
+val mkCallToByteOperator                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToSByteOperator                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt16Operator                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt16Operator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToIntOperator                      : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt32Operator                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt32Operator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToInt64Operator                    : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUInt64Operator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToSingleOperator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToDoubleOperator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToIntPtrOperator                   : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToUIntPtrOperator                  : TcGlobals -> range -> TType -> Expr -> Expr
+
+val mkCallToCharOperator                     : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallToEnumOperator                     : TcGlobals -> range -> TType -> Expr -> Expr
 
 val mkCallDeserializeQuotationFSharp20Plus  : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr
 val mkCallDeserializeQuotationFSharp40Plus : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
@@ -1174,7 +1366,7 @@ val mkCallFailInit           : TcGlobals -> range -> Expr
 val mkCallFailStaticInit    : TcGlobals -> range -> Expr 
 val mkCallCheckThis          : TcGlobals -> range -> TType -> Expr -> Expr 
 
-val mkCase : Test * DecisionTree -> DecisionTreeCase
+val mkCase : DecisionTreeTest * DecisionTree -> DecisionTreeCase
 
 val mkCallQuoteToLinqLambdaExpression : TcGlobals -> range -> TType -> Expr -> Expr
 
@@ -1226,12 +1418,11 @@ val TyconRefHasAttribute : TcGlobals -> range -> BuiltinAttribInfo -> TyconRef -
 /// Try to find the AttributeUsage attribute, looking for the value of the AllowMultiple named parameter
 val TryFindAttributeUsageAttribute : TcGlobals -> range -> TyconRef -> bool option
 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 /// returns Some(assemblyName) for success
 val TryDecodeTypeProviderAssemblyAttr : ILGlobals -> ILAttribute -> string option
 #endif
 val IsSignatureDataVersionAttr  : ILAttribute -> bool
-val ILThingHasExtensionAttribute : ILAttributes -> bool
 val TryFindAutoOpenAttr           : IL.ILGlobals -> ILAttribute -> string option 
 val TryFindInternalsVisibleToAttr : IL.ILGlobals -> ILAttribute -> string option 
 val IsMatchingSignatureDataVersionAttr : IL.ILGlobals -> ILVersionInfo -> ILAttribute -> bool
@@ -1250,23 +1441,37 @@ val mkCompilerGeneratedAttr                          : TcGlobals -> int -> ILAtt
 // More common type construction
 //------------------------------------------------------------------------- 
 
+val isInByrefTy : TcGlobals -> TType -> bool
+val isOutByrefTy : TcGlobals -> TType -> bool
 val isByrefTy : TcGlobals -> TType -> bool
-val destByrefTy : TcGlobals -> TType -> TType
 
-val isByrefLikeTyconRef : TcGlobals -> TyconRef -> bool
-val isByrefLikeTy : TcGlobals -> TType -> bool
+val isNativePtrTy : TcGlobals -> TType -> bool
+val destByrefTy : TcGlobals -> TType -> TType
+val destNativePtrTy : TcGlobals -> TType -> TType
+
+val isByrefTyconRef : TcGlobals -> TyconRef -> bool
+val isByrefLikeTyconRef : TcGlobals -> range -> TyconRef -> bool
+val isSpanLikeTyconRef : TcGlobals -> range -> TyconRef -> bool
+val isByrefLikeTy : TcGlobals -> range -> TType -> bool
+
+/// Check if the type is a byref-like but not a byref.
+val isSpanLikeTy : TcGlobals -> range -> TType -> bool
 
 //-------------------------------------------------------------------------
 // Tuple constructors/destructors
 //------------------------------------------------------------------------- 
 
-val isTupleExpr : Expr -> bool
-val tryDestTuple : Expr -> Exprs
-val mkTupled : TcGlobals -> range -> Exprs -> TType list -> Expr 
-val mkTupledNoTypes : TcGlobals -> range -> Exprs -> Expr 
-val mkTupledTy : TcGlobals -> TType list -> TType
-val mkTupledVarsTy : TcGlobals -> Val list -> TType
-val mkTupledVars : TcGlobals -> range -> Val list -> Expr 
+val isRefTupleExpr : Expr -> bool
+val tryDestRefTupleExpr : Expr -> Exprs
+
+val mkAnyTupledTy : TcGlobals -> TupInfo -> TType list -> TType
+
+val mkAnyTupled : TcGlobals -> range -> TupInfo -> Exprs -> TType list -> Expr 
+val mkRefTupled : TcGlobals -> range -> Exprs -> TType list -> Expr 
+val mkRefTupledNoTypes : TcGlobals -> range -> Exprs -> Expr 
+val mkRefTupledTy : TcGlobals -> TType list -> TType
+val mkRefTupledVarsTy : TcGlobals -> Val list -> TType
+val mkRefTupledVars : TcGlobals -> range -> Val list -> Expr 
 val mkMethodTy : TcGlobals -> TType list list -> TType -> TType
 
 //-------------------------------------------------------------------------
@@ -1322,7 +1527,6 @@ val mkChoiceCaseRef : TcGlobals -> range -> int -> int -> UnionCaseRef
 
 type PrettyNaming.ActivePatternInfo with 
     member Names : string list 
-    member IsTotal: bool
 
     member ResultType : TcGlobals -> range -> TType list -> TType
     member OverallType : TcGlobals -> range -> TType -> TType list -> TType
@@ -1348,10 +1552,12 @@ val IsGenericValWithGenericContraints: TcGlobals -> Val -> bool
 type Entity with 
     member HasInterface : TcGlobals -> TType -> bool
     member HasOverride : TcGlobals -> string -> TType list -> bool
+    member HasMember : TcGlobals -> string -> TType list -> bool
 
 type EntityRef with 
     member HasInterface : TcGlobals -> TType -> bool
     member HasOverride : TcGlobals -> string -> TType list -> bool
+    member HasMember : TcGlobals -> string -> TType list -> bool
 
 val (|AttribBitwiseOrExpr|_|) : TcGlobals -> Expr -> (Expr * Expr) option
 val (|EnumExpr|_|) : TcGlobals -> Expr -> Expr option
@@ -1361,6 +1567,8 @@ val (|TypeDefOfExpr|_|) : TcGlobals -> Expr -> TType option
 val EvalLiteralExprOrAttribArg: TcGlobals -> Expr -> Expr
 val EvaledAttribExprEquality : TcGlobals -> Expr -> Expr -> bool
 val IsSimpleSyntacticConstantExpr: TcGlobals -> Expr -> bool
+
+val (|ConstToILFieldInit|_|): Const -> ILFieldInit option
 
 val (|ExtractAttribNamedArg|_|) : string -> AttribNamedArg list -> AttribExpr option 
 val (|AttribInt32Arg|_|) : AttribExpr -> int32 option
@@ -1381,6 +1589,7 @@ val DetectAndOptimizeForExpression : TcGlobals -> OptimizeForExpressionOptions -
 
 val TryEliminateDesugaredConstants : TcGlobals -> range -> Const -> Expr option
 
+val MemberIsExplicitImpl : TcGlobals -> ValMemberInfo -> bool
 val ValIsExplicitImpl : TcGlobals -> Val -> bool
 val ValRefIsExplicitImpl : TcGlobals -> ValRef -> bool
 
@@ -1390,3 +1599,12 @@ val rebuildLinearMatchExpr : (SequencePointInfoForBinding * range * DecisionTree
 val mkCoerceIfNeeded : TcGlobals -> tgtTy: TType -> srcTy: TType -> Expr -> Expr
 
 val (|InnerExprPat|) : Expr -> Expr
+
+val allValsOfModDef : ModuleOrNamespaceExpr -> seq<Val>
+
+val BindUnitVars : TcGlobals -> (Val list * ArgReprInfo list * Expr) -> Val list * Expr
+
+val isThreadOrContextStatic: TcGlobals -> Attrib list -> bool
+
+val mkUnitDelayLambda: TcGlobals -> range -> Expr -> Expr
+

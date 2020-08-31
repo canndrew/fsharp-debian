@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 module internal Microsoft.FSharp.Compiler.Lib
 
@@ -16,10 +16,21 @@ let verbose = false
 let progress = ref false 
 let tracking = ref false // intended to be a general hook to control diagnostic output when tracking down bugs
 
-let condition _s = 
-    try (System.Environment.GetEnvironmentVariable(_s) <> null) with _ -> false
+let condition s = 
+    try (System.Environment.GetEnvironmentVariable(s) <> null) with _ -> false
+
+let GetEnvInteger e dflt = match System.Environment.GetEnvironmentVariable(e) with null -> dflt | t -> try int t with _ -> dflt
 
 let dispose (x:System.IDisposable) = match x with null -> () | x -> x.Dispose()
+
+type SaveAndRestoreConsoleEncoding () =
+    let savedOut = System.Console.Out
+
+    interface System.IDisposable with
+        member this.Dispose() = 
+            try 
+                System.Console.SetOut(savedOut)
+            with _ -> ()
 
 //-------------------------------------------------------------------------
 // Library: bits
@@ -94,29 +105,29 @@ module NameMap =
 //------------------------------------------------------------------------- 
 module Check = 
     
-    /// Throw System.InvalidOperationException() if argument is None.
-    /// If there is a value (e.g. Some(value)) then value is returned.
+    /// Throw <c>System.InvalidOperationException()</c> if argument is <c>None</c>.
+    /// If there is a value (e.g. <c>Some(value)</c>) then value is returned.
     let NotNone argname (arg:'T option) : 'T = 
         match arg with 
         | None -> raise (new System.InvalidOperationException(argname))
         | Some x -> x
 
-    /// Throw System.ArgumentNullException() if argument is null.
+    /// Throw <c>System.ArgumentNullException()</c> if argument is <c>null</c>.
     let ArgumentNotNull arg argname = 
         match box(arg) with 
         | null -> raise (new System.ArgumentNullException(argname))
         | _ -> ()
        
         
-    /// Throw System.ArgumentNullException() if array argument is null.
-    /// Throw System.ArgumentOutOfRangeException() is array argument is empty.
+    /// Throw <c>System.ArgumentNullException()</c> if array argument is <c>null</c>.
+    /// Throw <c>System.ArgumentOutOfRangeException()</c> is array argument is empty.
     let ArrayArgumentNotNullOrEmpty (arr:'T[]) argname = 
         ArgumentNotNull arr argname
         if (0 = arr.Length) then
             raise (new System.ArgumentOutOfRangeException(argname))
 
-    /// Throw System.ArgumentNullException() if string argument is null.
-    /// Throw System.ArgumentOutOfRangeException() is string argument is empty.
+    /// Throw <c>System.ArgumentNullException()</c> if string argument is <c>null</c>.
+    /// Throw <c>System.ArgumentOutOfRangeException()</c> is string argument is empty.
     let StringArgumentNotNullOrEmpty (s:string) argname = 
         ArgumentNotNull s argname
         if s.Length = 0 then
@@ -144,7 +155,7 @@ module IntMap =
 // Library: generalized association lists
 //------------------------------------------------------------------------
 
-module ListAssoc = 
+module ListAssoc =
 
     /// Treat a list of key-value pairs as a lookup collection.
     /// This function looks up a value based on a match from the supplied
@@ -155,26 +166,23 @@ module ListAssoc =
       | (x',y)::t -> if f x x' then y else find f x t
 
     /// Treat a list of key-value pairs as a lookup collection.
-    /// This function returns true if two keys are the same according to the predicate
-    /// function passed in.
-    let rec containsKey (f:'key->'key->bool) (x:'key) (l:('key*'value) list) : bool = 
-      match l with 
-      | [] -> false
-      | (x',_y)::t -> f x x' || containsKey f x t
+    /// This function looks up a value based on a match from the supplied
+    /// predicate function and returns None if value does not exist.
+    let rec tryFind (f:'key->'key->bool) (x:'key) (l:('key*'value) list) : 'value option = 
+        match l with 
+        | [] -> None
+        | (x',y)::t -> if f x x' then Some y else tryFind f x t
 
 //-------------------------------------------------------------------------
 // Library: lists as generalized sets
 //------------------------------------------------------------------------
 
 module ListSet = 
-    (* NOTE: O(n)! *)
-    let rec contains f x l = 
-        match l with 
-        | [] -> false
-        | x'::t -> f x x' || contains f x t
+    let inline contains f x l = List.exists (f x) l
 
     (* NOTE: O(n)! *)
     let insert f x l = if contains f x l then l else x::l
+
     let unionFavourRight f l1 l2 = 
         match l1, l2 with 
         | _, [] -> l1
@@ -222,9 +230,22 @@ module ListSet =
     // Note: if duplicates appear, keep the ones toward the _front_ of the list
     let setify f l = List.foldBack (insert f) (List.rev l) [] |> List.rev
 
+    let hasDuplicates f l =
+        match l with
+        | [] -> false
+        | [_] -> false
+        | [x; y] -> f x y
+        | x::rest ->
+            let rec loop acc l =
+                match l with
+                | [] -> false
+                | x::rest ->
+                    if contains f x acc then
+                        true 
+                    else
+                        loop (x::acc) rest
 
-module FlatListSet = 
-    let remove f x l = FlatList.filter (fun y -> not (f x y)) l
+            loop [x] rest
 
 //-------------------------------------------------------------------------
 // Library: pairs
@@ -250,16 +271,16 @@ let map6Of6 f (a1,a2,a3,a4,a5,a6) = (a1,a2,a3,a4,a5,f a6)
 let foldPair (f1,f2)    acc (a1,a2)         = f2 (f1 acc a1) a2
 let fold1Of2 f1    acc (a1,_a2)         = f1 acc a1
 let foldTriple (f1,f2,f3) acc (a1,a2,a3)      = f3 (f2 (f1 acc a1) a2) a3
+let foldQuadruple (f1,f2,f3,f4) acc (a1,a2,a3,a4)      = f4 (f3 (f2 (f1 acc a1) a2) a3) a4
 let mapPair (f1,f2)    (a1,a2)     = (f1 a1, f2 a2)
 let mapTriple (f1,f2,f3) (a1,a2,a3)  = (f1 a1, f2 a2, f3 a3)
+let mapQuadruple (f1,f2,f3,f4) (a1,a2,a3,a4)  = (f1 a1, f2 a2, f3 a3, f4 a4)
 let fmap2Of2 f z (a1,a2)       = let z,a2 = f z a2 in z,(a1,a2)
 
 module List = 
     let noRepeats xOrder xs =
         let s = Zset.addList   xs (Zset.empty xOrder) // build set 
-        Zset.elements s          // get elements... no repeats 
-
-    let groupBy f (xs:list<'T>) =  xs |> Seq.groupBy f |> Seq.map (map2Of2 Seq.toList) |> Seq.toList
+        Zset.elements s          // get elements... no repeats
 
 //---------------------------------------------------------------------------
 // Zmap rebinds
@@ -299,18 +320,18 @@ let equalOn f x y = (f x) = (f y)
 
 let bufs f = 
     let buf = System.Text.StringBuilder 100 
-    f buf; 
+    f buf 
     buf.ToString()
 
 let buff (os: TextWriter) f x = 
     let buf = System.Text.StringBuilder 100 
-    f buf x; 
+    f buf x 
     os.Write(buf.ToString())
 
 // Converts "\n" into System.Environment.NewLine before writing to os. See lib.fs:buff
 let writeViaBufferWithEnvironmentNewLines (os: TextWriter) f x = 
     let buf = System.Text.StringBuilder 100 
-    f buf x;
+    f buf x
     let text = buf.ToString()
     let text = text.Replace("\n",System.Environment.NewLine)
     os.Write text
@@ -364,14 +385,14 @@ let nullableSlotFull x = x
 // Caches, mainly for free variables
 //---------------------------------------------------------------------------
 
-type cache<'T> = { mutable cacheVal: 'T NonNullSlot; }
+type cache<'T> = { mutable cacheVal: 'T NonNullSlot }
 let newCache() = { cacheVal = nullableSlotEmpty() }
 
 let inline cached cache resf = 
     match box cache.cacheVal with 
     | null -> 
         let res = resf() 
-        cache.cacheVal <- nullableSlotFull res; 
+        cache.cacheVal <- nullableSlotFull res 
         res
     | _ -> 
         cache.cacheVal
@@ -381,40 +402,9 @@ let inline cacheOptRef cache f =
     | Some v -> v
     | None -> 
        let res = f()
-       cache := Some res;
+       cache := Some res
        res 
 
-
-// There is a bug in .NET Framework v2.0.52727 DD#153959 that very occasionally hits F# code.
-// It is related to recursive class loading in multi-assembly NGEN scenarios. The bug has been fixed but
-// not yet deployed.
-// The bug manifests itself as an ExecutionEngine failure or fast-fail process exit which comes
-// and goes depending on whether components are NGEN'd or not, e.g. 'ngen install FSharp.COmpiler.dll'
-// One workaround for the bug is to break NGEN loading and fixups into smaller fragments. Roughly speaking, the NGEN
-// loading process works by doing delayed fixups of references in NGEN code. This happens on a per-method
-// basis. For example, one manifestation is that a "print" before calling a method like LexFilter.create gets
-// displayed but the corresponding "print" in the body of that function doesn't get displayed. In between, the NGEN
-// image loader is performing a whole bunch of fixups of the NGEN code for the body of that method, and also for
-// bodies of methods referred to by that method. That second bit is very important: the fixup causing the crash may
-// be a couple of steps down the dependency chain.
-//
-// One way to break work into smaller chunks is to put delays in the call chains, i.e. insert extra stack frames. That's
-// what the function 'delayInsertedToWorkaroundKnownNgenBug' is for. If you get this problem, try inserting 
-//    delayInsertedToWorkaroundKnownNgenBug "Delay1" (fun () -> ...)
-// at the top of the function that doesn't seem to be being called correctly. This will help you isolate out the problem
-// and may make the problem go away altogether. Enable the 'print' commands in that function too.
-
-let delayInsertedToWorkaroundKnownNgenBug s f = 
-    (* Some random code to prevent inlining of this function *)
-    let res = ref 10
-    for i = 0 to 2 do 
-       res := !res + String.length s;
-    done;
-    if verbose then printf "------------------------executing NGEN bug delay '%s', calling 'f' --------------\n" s;
-    let res = f()
-    if verbose then printf "------------------------exiting NGEN bug delay '%s' --------------\n" s;
-    res
-    
 
 #if DUMPER
 type Dumper(x:obj) =
@@ -431,7 +421,7 @@ module internal AsyncUtil =
     open System.Threading
     open Microsoft.FSharp.Control
 
-    /// Represents the reified result of an asynchronous computation
+    /// Represents the reified result of an asynchronous computation.
     [<NoEquality; NoComparison>]
     type AsyncResult<'T>  =
         |   AsyncOk of 'T
@@ -445,7 +435,7 @@ module internal AsyncUtil =
                     | AsyncException exn -> econt exn
                     | AsyncCanceled exn -> ccont exn)
 
-    /// When using .NET 4.0 you can replace this type by Task<'T>
+    /// When using .NET 4.0 you can replace this type by <see cref="Task{T}"/>
     [<Sealed>]
     type AsyncResultCell<'T>() =
         let mutable result = None
@@ -464,7 +454,7 @@ module internal AsyncUtil =
                     if result.IsSome then  
                         []
                     else
-                        result <- Some res;
+                        result <- Some res
                         // Invoke continuations in FIFO order
                         // Continuations that Async.FromContinuations provide do QUWI/SynchContext.Post,
                         // so the order is not overly relevant but still.                        
@@ -485,7 +475,7 @@ module internal AsyncUtil =
             |   _ ->
                     grabbedConts |> List.iter postOrQueue
 
-        /// Get the reified result
+        /// Get the reified result.
         member private x.AsyncPrimitiveResult =
             Async.FromContinuations(fun (cont,_,_) ->
                 let grabbedResult =
@@ -504,7 +494,7 @@ module internal AsyncUtil =
                 | Some res -> cont res)
                           
 
-        /// Get the result and commit it
+        /// Get the result and Commit(...).
         member x.AsyncResult =
             async { let! res = x.AsyncPrimitiveResult
                     return! AsyncResult.Commit(res) }
@@ -533,8 +523,13 @@ module UnmanagedProcessExecutionOptions =
     extern UInt32 private GetLastError()
 
     // Translation of C# from http://swikb/v1/DisplayOnlineDoc.aspx?entryID=826 and copy in bug://5018
+#if !FX_NO_SECURITY_PERMISSIONS
     [<System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityAction.Assert,UnmanagedCode = true)>] 
-    let EnableHeapTerminationOnCorruption() =        
+#endif
+    let EnableHeapTerminationOnCorruption() =
+#if FX_NO_HEAPTERMINATION
+        ()
+#else
         if (System.Environment.OSVersion.Version.Major >= 6 && // If OS is Vista or higher
             System.Environment.Version.Major < 3) then         // and CLR not 3.0 or higher 
             // "The flag HeapSetInformation sets is available in Windows XP SP3 and later.
@@ -553,4 +548,5 @@ module UnmanagedProcessExecutionOptions =
                             "Unable to enable unmanaged process execution option TerminationOnCorruption. " + 
                             "HeapSetInformation() returned FALSE; LastError = 0x" + 
                             GetLastError().ToString("X").PadLeft(8,'0') + "."))
+#endif
 

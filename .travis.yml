@@ -1,12 +1,21 @@
 language: csharp
+dist: trusty
+sudo: true
+
+os:
+  - linux
+  - osx
+
+mono:
+  - nightly
+  - latest
+  - 5.10.0
+  - 5.8.0
 
 install:
 
-script: 
-  - ./autogen.sh   --prefix=/usr
-  - make 
-  - sudo make install
-  - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-  - (cd tests/projects; ./build.sh)
-  - (cd tests/fsharp/core; ./run-opt.sh)
+script: ./mono/build-mono.sh && ./mono/test-mono.sh
 
+#  allow_failures:
+#    - os: osx
+#      mono: latest

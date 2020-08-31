@@ -1,8 +1,6 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Linq
-
-#if FX_ATLEAST_LINQ
 
     open System
     open System.Linq.Expressions
@@ -307,4 +305,3 @@ namespace Microsoft.FSharp.Linq.RuntimeHelpers
         val SubstHelperRaw : Expr * Var[] * obj[] -> Expr
 
         val internal (|SpecificCallToMethod|_|) : System.RuntimeMethodHandle -> (Expr -> (Expr option * Type list * Expr list) option)
-#endif

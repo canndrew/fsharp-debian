@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace  Internal.Utilities.Text.Parsing
 open Internal.Utilities
@@ -62,8 +62,8 @@ type internal Tables<'tok> =
       stateToProdIdxsTableElements: uint16[];  
       stateToProdIdxsTableRowOffsets: uint16[];  
       productionToNonTerminalTable: uint16[];
-      /// For fsyacc.exe, this entry is filled in by context from the generated parser file. If no 'parse_error' function
-      /// is defined by the user then ParseHelpers.parse_error is used by default (ParseHelpers is opened
+      /// For <c>fsyacc.exe</c>, this entry is filled in by context from the generated parser file. If no 'parse_error' function
+      /// is defined by the user then <c>ParseHelpers.parse_error</c> is used by default (ParseHelpers is opened
       /// at the top of the generated parser file)
       parseError:  ParseErrorContext<'tok> -> unit;
       numTerminals: int;
@@ -72,8 +72,8 @@ type internal Tables<'tok> =
 //-------------------------------------------------------------------------
 // An implementation of stacks.
 
-// This type is in System.dll so for the moment we can't use it in FSharp.Core.dll
-//type Stack<'a> = System.Collections.Generic.Stack<'a>
+// This type is in <c>System.dll</c> so for the moment we can't use it in <c>FSharp.Core.dll</c>
+// type Stack<'a> = System.Collections.Generic.Stack<'a>
 
 type Stack<'a>(n)  = 
     let mutable contents = Array.zeroCreate<'a>(n)
@@ -83,8 +83,8 @@ type Stack<'a>(n)  =
         let oldSize = contents.Length
         if newSize > oldSize then 
             let old = contents
-            contents <- Array.zeroCreate (max newSize (oldSize * 2));
-            Array.blit old 0 contents 0 count;
+            contents <- Array.zeroCreate (max newSize (oldSize * 2))
+            Array.blit old 0 contents 0 count
     
     member buf.Count = count
     member buf.Pop() = count <- count - 1
@@ -123,14 +123,10 @@ module internal Implementation =
     // Read the tables written by FSYACC.  
 
     type AssocTable(elemTab:uint16[], offsetTab:uint16[]) =
-#if OLD_CACHE
-        let cache = new Dictionary<int,int>(2000)
-#else
         let cacheSize = 7919 // the 1000'th prime
         // Use a simpler hash table with faster lookup, but only one
         // hash bucket per key.
         let cache = Array.zeroCreate<int> (cacheSize * 2)
-#endif
 
         member t.ReadAssoc (minElemNum,maxElemNum,defaultValueOfAssoc,keyToFind) =     
             // do a binary chop on the table 
@@ -150,34 +146,23 @@ module internal Implementation =
             // takes up around 10% of of parsing time 
             // for parsing intensive samples such as the bootstrapped F# compiler.
             //
-            // Note: using a .NET Dictionary for this int -> int table looks like it could be sub-optimal.
+            // NOTE: using a .NET Dictionary for this int -> int table looks like it could be sub-optimal.
             // Some other better sparse lookup table may be better.
             assert (rowNumber < 0x10000)
             assert (keyToFind < 0x10000)
             let cacheKey = (rowNumber <<< 16) ||| keyToFind
-#if OLD_CACHE
-            let mutable res = 0 
-            let ok = cache.TryGetValue(cacheKey, &res) 
-            if ok then res 
-            else
-#else
-            let cacheIdx = int32 (uint32 cacheKey % uint32 cacheSize)
-            let cacheKey2 = cache.[cacheIdx*2]
-            let v = cache.[cacheIdx*2+1]
+            let cacheIdx = (int32 (uint32 cacheKey % uint32 cacheSize)) * 2
+            let cacheKey2 = cache.[cacheIdx]
+            let v = cache.[cacheIdx+1]
             if cacheKey = cacheKey2 then v 
             else
-#endif
                 let headOfTable = int offsetTab.[rowNumber]
                 let firstElemNumber = headOfTable + 1           
                 let numberOfElementsInAssoc = int elemTab.[headOfTable*2]
                 let defaultValueOfAssoc = int elemTab.[headOfTable*2+1]          
                 let res = t.ReadAssoc (firstElemNumber,firstElemNumber+numberOfElementsInAssoc,defaultValueOfAssoc,keyToFind)
-#if OLD_CACHE
-                cache.[cacheKey] <- res
-#else
-                cache.[cacheIdx*2] <- cacheKey
-                cache.[cacheIdx*2+1] <- res
-#endif
+                cache.[cacheIdx] <- cacheKey
+                cache.[cacheIdx+1] <- res
                 res
 
         // Read all entries in the association table
@@ -288,7 +273,7 @@ module internal Implementation =
 #endif
                 let nextState = actionValue action 
                 // The "error" non terminal needs position information, though it tends to be unreliable.
-                // Use the StartPos/EndPos from the lex buffer
+                // Use the StartPos/EndPos from the lex buffer.
                 valueStack.Push(ValueInfo(box (), lexbuf.StartPos, lexbuf.EndPos));
                 stateStack.Push(nextState)
             else

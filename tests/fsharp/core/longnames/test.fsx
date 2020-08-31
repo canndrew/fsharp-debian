@@ -1,5 +1,5 @@
 // #Conformance #ObjectConstructors 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_longnames
 #endif
 let failures = ref []
@@ -15,20 +15,6 @@ let test (s : string) b =
     else report_failure (s)
 
 let check s b1 b2 = test s (b1 = b2)
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 (* Some test expressions *)
 
@@ -126,8 +112,7 @@ let v12 =
 
 let v13 = Microsoft.FSharp.Core.Some(1)
 
-#if Portable
-#else
+#if !NETCOREAPP1_0
 (* check lid setting bug *)
 
 open System.Diagnostics
@@ -422,8 +407,215 @@ module TestsForUsingTypeNamesAsValuesWhenTheTypeHasAConstructor = begin
 
 end
 
+module Ok1 = 
 
-#if ALL_IN_ONE
+    module A =
+        let create() = 1
+        type Dummy = A | B
+
+
+    type A() = 
+        member x.P = 1
+
+    test "lkneecec09iew1" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok2 = 
+
+    type A() = 
+        member x.P = 1
+
+
+    module A =
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew2" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok3 = 
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    type A() = 
+        member x.P = 1
+
+    test "lkneecec09iew3" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok4 = 
+
+    type A() = 
+        member x.P = 1
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew4" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+
+module rec Ok5 = 
+
+    module A =
+        let create() = 1
+        type Dummy = A | B
+
+
+    type A() = 
+        member x.P = 1
+
+    test "lkneecec09iew5" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module rec Ok6 = 
+
+    type A() = 
+        member x.P = 1
+
+
+    module A =
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew6" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module rec Ok7 = 
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    type A() = 
+        member x.P = 1
+
+    test "lkneecec09iew7" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module rec Ok8 = 
+
+    type A() = 
+        member x.P = 1
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew8" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok9 = 
+
+    type A() = 
+        member x.P = 1
+
+    type A<'T>() = 
+        member x.P = 1
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+
+    test "lkneecec09iew9" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok9b = 
+
+    type A<'T>() = 
+        member x.P = 1
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    //A<'T> has a type parameter, so appending Module is not necessary.
+    test "lkneecec09iew9" (not (typeof<A.Dummy>.FullName.Contains("AModule") ) )
+
+module rec Ok10 = 
+
+    type A() = 
+        member x.P = 1
+
+    type A<'T>() = 
+        member x.P = 1
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew10" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+module Ok11 = 
+
+    type A = int
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew11" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+module Ok12 = 
+
+    type A = A
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew12" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+module Ok13 = 
+
+    type A = A of string
+
+    module A = 
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew13" (typeof<A.Dummy>.FullName.Contains("AModule") )
+
+
+module Ok14 = 
+
+    module X = 
+        type A = A of string
+
+    type X.A with 
+        member x.P = 1
+
+    module A =  // the type definition is an augmentation so doesn't get the suffix
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew14" (not (typeof<A.Dummy>.FullName.Contains("AModule") )) 
+
+module rec Ok15 = 
+
+    open X
+    
+    module X = 
+        type A = A of string
+
+    type A with 
+        member x.P = 1
+
+    module A =  // the type definition is an augmentation so doesn't get the suffix
+        let create() = 1
+        type Dummy = A | B
+
+    test "lkneecec09iew15" (not (typeof<A.Dummy>.FullName.Contains("AModule") )) 
+
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

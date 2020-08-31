@@ -1,5 +1,5 @@
 ﻿// #Quotations #Query
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_queriesOverIQueryable
 #endif
 
@@ -18,19 +18,6 @@ module Infrastructure =
         stderr.Write" NO: "
         stderr.WriteLine s
         failures := !failures @ [s]
-
-#if NetCore
-#else
-    let argv = System.Environment.GetCommandLineArgs() 
-    let SetCulture() = 
-        if argv.Length > 2 && argv.[1] = "--culture" then  
-            let cultureString = argv.[2] 
-            let culture = new System.Globalization.CultureInfo(cultureString) 
-            stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-            System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  
-    do SetCulture()    
-#endif
 
     let check  s v1 v2 = 
        if v1 = v2 then 
@@ -981,11 +968,13 @@ module QueryExecutionOverIQueryable =
                  yield (i.Cost + j.Cost) }) 
         "db.Join(db, i => i.Name, j => j.Name, (i, j) => new AnonymousObject`2(Item1 = i, Item2 = j)).Select(_arg3 => (_arg3.Item1.Cost + _arg3.Item2.Cost))"
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     checkLinqQueryText "lqtcnewnc06yh9Q3" 
         (query { for i in db do 
                  join j in db on (i.Quantity ?= j.Quantity.GetValueOrDefault())
                  yield (i.Cost + j.Cost) }) 
         "db.Join(db, i => i.Quantity, j => Convert(j.Quantity.GetValueOrDefault()), (i, j) => new AnonymousObject`2(Item1 = i, Item2 = j)).Select(_arg1 => (_arg1.Item1.Cost + _arg1.Item2.Cost))"
+#endif
 
     checkLinqQueryText "lqtcnewnc06yh9Q4" 
         (query { for i in db do 
@@ -1011,6 +1000,7 @@ module QueryExecutionOverIQueryable =
 
 
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     checkLinqQueryText "ltcnewnc06yh9Q6" 
         (query { for i in db do 
                  groupJoin j in db on (i.Quantity ?= j.Quantity.GetValueOrDefault()) into group
@@ -1022,6 +1012,7 @@ module QueryExecutionOverIQueryable =
                  groupJoin j in db on (i.Quantity.GetValueOrDefault() =? j.Quantity) into group
                  yield group} ) 
         "db.GroupJoin(db, i => Convert(i.Quantity.GetValueOrDefault()), j => j.Quantity, (i, group) => new AnonymousObject`2(Item1 = i, Item2 = group)).Select(_arg1 => _arg1.Item2)"
+#endif
 
     checkLinqQueryText "ltcnewnc06yh9Q8" 
         (query { for i in db do groupJoin j in db on (i.Quantity ?=? j.Quantity) into group; yield group } ) 
@@ -2460,11 +2451,13 @@ module Problem2 =
     let l = [box item]
     let items = l.AsQueryable()
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     QueryExecutionOverIQueryable.checkLinqQueryText "ltcjhnwec7eweww2" 
        (query { for item in items do
                 where (item :? Item)
                 select (item :?> Item) })
        "[1].Where(item => (item Is Item)).Select(item => Convert(item))"
+#endif
 
     checkCommuteSeq "ltcjhnwec7eweww2b" 
        (query { for item in items do
@@ -2473,7 +2466,7 @@ module Problem2 =
        [item]
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

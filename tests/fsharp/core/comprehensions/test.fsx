@@ -1,5 +1,5 @@
 // #Conformance #Sequences #Regression #ControlFlow #SyntacticSugar #ComputationExpressions 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_comprehensions
 #endif
 #light
@@ -14,22 +14,6 @@ let test (s : string) b =
     stderr.Write(s)
     if b then stderr.WriteLine " OK"
     else report_failure (s)
-
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif  
-
 
 let _ = test "coic23a" (Seq.toList { 'a' .. 'c' } = ['a';'b';'c'])
 
@@ -534,14 +518,12 @@ module MaxIntMinIntBOundaryCases = begin
 
 end
  
+#if !NETCOREAPP1_0
 open System.IO
 open System.Xml
 
 let pickering() = 
-    #if Portable
-    ()
-    #else
-    let files = Directory.GetFiles(@"C:\Program Files\Microsoft Enterprise Library January 2006\", "*.csproj", SearchOption.AllDirectories) in
+    let files = Directory.GetFiles(@"C:\Program Files\Microsoft Enterprise Library January 2006\") in
     for file in files do
         let fileInfo = new FileInfo(file) in
         fileInfo.Attributes <- FileAttributes.Archive;
@@ -557,7 +539,7 @@ let pickering() =
         doc.Save(file);
     done;
     stdin.ReadLine()
-    #endif
+#endif
  
 (* Specification and discussion.
 
@@ -677,9 +659,6 @@ fails (fun () -> [0.0 .. 1.1 .. nan])                   |> check    "x .. y .. n
 
 
 module M = 
-    #if Portable
-    let printfn s = printfn "%s" s
-    #endif
     do printfn "hello"
 
 module M2 = begin 
@@ -740,9 +719,6 @@ module MoreSequenceSyntaxTests =
 
                 
     module SeqTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a0 : seq<int> = seq { do printfn "ello hello" }  
         let x0a0a = do ()
@@ -841,9 +817,6 @@ module MoreSequenceSyntaxTests =
                        if y % 2 = 0 then yield (x,y) }
 
     module AsyncTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a = async { return 1 }  
         let x0c = async { for x in 1..2 do return () }  
@@ -873,7 +846,7 @@ module MoreSequenceSyntaxTests =
                             return 2 }  
         let x0m = async { printfn "hello" }
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 #else
         let f103 () = 
             async { do! Async.SwitchToNewThread()
@@ -891,9 +864,6 @@ module MoreSequenceSyntaxTests =
         let x2 = [ 1;2;3 ] 
 
     module ExpressionTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         module M = 
            do printfn "hello" 
@@ -933,9 +903,6 @@ module SyncMonad =
 
 
     module SyncTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a : Sync<int> = sync { return 1 }  
         let x0c : Sync<unit>  = sync { for x in 1..2 do return () }  
@@ -979,7 +946,7 @@ module SyncMonad =
            sync { printfn "hello" }
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 #else
     type ThreadBuilder () = 
         inherit SyncBuilder()
@@ -989,9 +956,6 @@ module SyncMonad =
     let thread = new ThreadBuilder()
     
     module ThreadTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a : int = thread { return 1 }  
         let x0c : unit  = thread { for x in 1..2 do return () }  
@@ -1064,9 +1028,6 @@ module ContMonad =
 
 
     module ContTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a : Cont<int> = cont { return 1 }  
         let x0e  : Cont<int> = 
@@ -1208,11 +1169,7 @@ module ExistsMonad =
                    let z = ref 3
                    while !z < 10 do
                       if (x + y + !z = 2009) then 
-                          #if Portable 
-                          printfn "%s" "found it"
-                          #else
                           printfn "found it"
-                          #endif
                       incr z 
 
     exists { for x in 0..1000 do
@@ -1225,9 +1182,6 @@ module ExistsMonad =
 
                       
     module ExistsTests = 
-        #if Portable
-        let printfn s = printfn "%s" s
-        #endif
 
         let x0a : bool = exists.Run (exists.Delay(fun () -> exists.Yield(true)))
         let x0b : bool = exists { yield true }  
@@ -1488,7 +1442,46 @@ module EnumPatternWithFunkyTypes_FSharp_1_0_13904 =
     // This is allowed - 'a is known to be "bool"
     let s = seq { for i in T true -> i }
 
-#if ALL_IN_ONE
+module SideEffectListMonad =
+    type SideEffectListWithReturnBuilder(onReturn, onZero) =
+        member b.Bind(x:unit,f) :list<'b> = f()
+        member b.Combine(x:list<'a>,y:list<'a>) :list<'a> = List.append x y
+        member b.Delay(f:unit->list<'a>) :list<'a> = f()
+        member b.Return _ :list<'a> = onReturn(); []
+        member b.Zero() :list<'a> = onZero(); []
+        member b.Yield(x:'a) :list<'a> = [x]
+
+    let sideEffectListWithReturn onReturn onZero = SideEffectListWithReturnBuilder(onReturn, onZero)
+
+    type SideEffectListWithZeroBuilder(onZero) =
+        member b.Bind(x:unit,f) :list<'b> = f()
+        member b.Combine(x:list<'a>,y:list<'a>) :list<'a> = List.append x y
+        member b.Delay(f:unit->list<'a>) :list<'a> = f()
+        member b.Zero() :list<'a> = onZero(); []
+        member b.Yield(x:'a) :list<'a> = [x]
+
+    let sideEffectListWithZero onZero = SideEffectListWithZeroBuilder(onZero)
+
+    module SideEffectListTests =
+
+        let x0a : list<int> * int * int =
+            let calledReturn = ref 0
+            let onReturn () = calledReturn := !calledReturn + 1
+            let calledZero = ref 0
+            let onZero () = calledZero := !calledZero + 1
+            sideEffectListWithReturn onReturn onZero { yield 1
+                                                       do! printfn "hello" }, !calledReturn, !calledZero
+        test "x0a" (x0a = ([1], 1, 0))
+
+        let x0b : list<int> * int =
+            let calledZero = ref 0
+            let onZero () = calledZero := !calledZero + 1
+            sideEffectListWithZero onZero { yield 1
+                                            do! printfn "hello" }, !calledZero
+        test "x0b" (x0b = ([1], 1))
+
+
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

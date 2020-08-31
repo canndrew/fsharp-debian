@@ -21,8 +21,8 @@
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
 
+mono/launcher text eol=lf
+mono/config.make text eol=lf
 targets.make text eol=lf
-install-sh text eol=lf
-*.in text eol=lf
-*.ac text eol=lf
-*.sh text eol=lf
+
+*.bsl linguist-vendored=true

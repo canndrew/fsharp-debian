@@ -1,6 +1,10 @@
 // #Regression #Conformance #Regression 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_math_numbers
+#endif
+
+#if NETCOREAPP1_0
+open CoreClrUtilities
 #endif
 
 #light
@@ -283,7 +287,7 @@ checkEq "negative32s" negative32s
 (* END *)  
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

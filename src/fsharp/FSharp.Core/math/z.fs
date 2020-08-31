@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 #nowarn "44" // This construct is deprecated. This function is for use by compiled F# code and should not be used directly
 namespace System.Numerics
@@ -19,8 +19,7 @@ namespace System.Numerics
     // NOTE: 0 has two repns (+1,0) or (-1,0).
     [<Struct>]
     [<CustomEquality; CustomComparison>]
-#if FX_ATLEAST_PORTABLE
-#else
+#if !NETSTANDARD1_6
     [<StructuredFormatDisplay("{StructuredDisplayString}I")>]
 #endif
     type BigInteger(signInt:int, v : BigNat) =
@@ -105,7 +104,7 @@ namespace System.Numerics
             |  1 -> BigNatModule.toString x.V                       // positive 
             | -1 -> 
                 if BigNatModule.isZero x.V             
-                then "0"                    // not negative infact, but zero. 
+                then "0"                    // not negative in fact, but zero. 
                 else "-" + BigNatModule.toString x.V  // negative
             |  0 -> "0"
             | _ -> invalidOp "signs should be +/- 1 or 0"
@@ -305,7 +304,7 @@ namespace System.Numerics
             | _ -> invalidArg "x" "signs should be +/- 1 or 0"
              
         static member Parse(text:string) =
-            if text = null then raise (new ArgumentNullException("text"))
+            if isNull text then raise (new ArgumentNullException("text"))
             let text = text.Trim()
             let len = text.Length 
             if len = 0 then raise (new System.FormatException(SR.GetString(SR.badFormatString)))
@@ -366,13 +365,13 @@ namespace Microsoft.FSharp.Core
             let tab64 = new System.Collections.Generic.Dictionary<int64,obj>()
             let tabParse = new System.Collections.Generic.Dictionary<string,obj>()
             
-            let FromInt64Dynamic (x64:int64) : obj = 
+            let FromInt64Dynamic (value:int64) : obj = 
                 lock tab64 (fun () -> 
                     let mutable res = Unchecked.defaultof<_> 
-                    let ok = tab64.TryGetValue(x64,&res)
+                    let ok = tab64.TryGetValue(value,&res)
                     if ok then res else 
-                    res <- BigInteger(x64)
-                    tab64.[x64] <- res
+                    res <- BigInteger(value)
+                    tab64.[value] <- res
                     res)                 
 
             let inline get32 (x32:int32) =  FromInt64Dynamic (int64 x32)
@@ -387,13 +386,13 @@ namespace Microsoft.FSharp.Core
                 (get32 1 :?> 'T)
                 when 'T : BigInteger = BigInteger.One
 
-            let FromInt32 (i:int32): 'T = 
-                (get32 i :?> 'T)
-                when 'T : BigInteger = new BigInteger(i)
+            let FromInt32 (value:int32): 'T = 
+                (get32 value :?> 'T)
+                when 'T : BigInteger = new BigInteger(value)
             
-            let FromInt64 (i:int64): 'T = 
-                (FromInt64Dynamic i :?> 'T)
-                when 'T : BigInteger = new BigInteger(i)
+            let FromInt64 (value:int64): 'T = 
+                (FromInt64Dynamic value :?> 'T)
+                when 'T : BigInteger = new BigInteger(value)
                 
             let getParse s = 
                 lock tabParse (fun () -> 
@@ -402,54 +401,8 @@ namespace Microsoft.FSharp.Core
                 if ok then 
                     res 
                 else 
-#if FSHARP_CORE_PORTABLE 
-                    // SL5 (and therefore Portable Profile47) does not have Parse, so make our own simple implementation
-                    let parse(s : string) =
-                        // ws* sign? digits+ ws*
-                        let mutable i = 0
-                        // leading whitespace
-                        while i < s.Length && System.Char.IsWhiteSpace(s.[i]) do
-                            i <- i + 1
-                        if i = s.Length then
-                            raise <| new System.ArgumentException()
-                        // optional sign
-                        let mutable isNegative = false
-                        if s.[i] = '+' then
-                            i <- i + 1
-                        elif s.[i] = '-' then
-                            isNegative <- true
-                            i <- i + 1
-                        if i = s.Length then
-                            raise <| new System.ArgumentException()
-                        // digits
-                        let startDigits = i
-                        while i < s.Length && System.Char.IsDigit(s.[i]) do
-                            i <- i + 1
-                        let endDigits = i
-                        let len = endDigits - startDigits
-                        if len = 0 then
-                            raise <| new System.ArgumentException()
-                        // trailing whitespace
-                        while i < s.Length && System.Char.IsWhiteSpace(s.[i]) do
-                            i <- i + 1
-                        if i <> s.Length then
-                            raise <| new System.ArgumentException()
-                        // text is now valid, parse it
-                        let mutable r = new System.Numerics.BigInteger(int(s.[startDigits]) - int('0'))
-                        let ten = new System.Numerics.BigInteger(10)
-                        for j in startDigits+1 .. endDigits-1 do
-                            r <- r * ten
-                            r <- r + new System.Numerics.BigInteger(int(s.[j]) - int('0'))
-                        if isNegative then
-                            r <- new System.Numerics.BigInteger(0) - r
-                        r
-                    let v = parse s
-#else
                     let v = 
 #if FX_NO_BIGINT
-                       BigInteger.Parse s
-#else
-#if FX_NO_BIGINT_CULTURE_PARSE
                        BigInteger.Parse s
 #else
                        if  isOX s then 
@@ -457,18 +410,16 @@ namespace Microsoft.FSharp.Core
                        else
                           BigInteger.Parse (s,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture)
 #endif
-#endif
-#endif
                     res <-  v
                     tabParse.[s] <- res
                     res)
 
-            let FromStringDynamic (s:string) : obj = 
-                getParse s
+            let FromStringDynamic (text:string) : obj = 
+                getParse text
                 
-            let FromString (s:string) : 'T = 
-                (FromStringDynamic s :?> 'T)
-                when 'T : BigInteger = getParse s
+            let FromString (text:string) : 'T = 
+                (FromStringDynamic text :?> 'T)
+                when 'T : BigInteger = getParse text
 
   
 

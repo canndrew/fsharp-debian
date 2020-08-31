@@ -1,8 +1,6 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Linq.RuntimeHelpers
-
-#if QUERIES_IN_FSLIB
 
 open System
 open Microsoft.FSharp.Core
@@ -40,28 +38,8 @@ type Grouping<'K, 'T>(key:'K, values:seq<'T>) =
 module internal Adapters = 
 
     let memoize f = 
-#if FX_NO_CONCURRENT_DICTIONARY
-         // No concurrent dictionary or TPL on "old-style" portable
-         let d = new System.Collections.Generic.Dictionary<Type,_>(HashIdentity.Structural) 
-         fun x ->
-            let mutable res = Unchecked.defaultof<_>
-            System.Threading.Monitor.Enter(d)
-            try
-                if d.TryGetValue(x ,&res) then 
-                    res 
-                else 
-                    let res = f x
-                    d.[x] <- res 
-                    res
-            finally
-                System.Threading.Monitor.Exit(d)
-
-#else    
-         let d = new System.Collections.Concurrent.ConcurrentDictionary<Type,_>(HashIdentity.Structural)        
-         fun x -> 
-             let mutable res = Unchecked.defaultof<_> 
-             if d.TryGetValue(x ,&res) then res else let res = f x in d.[x] <- res; res
-#endif               
+         let d = new System.Collections.Concurrent.ConcurrentDictionary<Type,'b>(HashIdentity.Structural)        
+         fun x -> d.GetOrAdd(x, fun r -> f r)
 
     let isPartiallyImmutableRecord : Type -> bool = 
         memoize (fun t -> 
@@ -316,4 +294,3 @@ module internal Adapters =
     let MakeSeqConv conv = match conv with NoConv -> NoConv | _ -> SeqConv conv
 
 
-#endif

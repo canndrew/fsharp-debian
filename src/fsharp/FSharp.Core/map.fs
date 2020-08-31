@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Collections
 
@@ -7,9 +7,6 @@ namespace Microsoft.FSharp.Collections
     open System.Diagnostics
     open Microsoft.FSharp.Core
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
-    open Microsoft.FSharp.Core.Operators
-    open Microsoft.FSharp.Collections
-    open Microsoft.FSharp.Primitives.Basics
 
     [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
     [<NoEquality; NoComparison>]
@@ -67,17 +64,18 @@ namespace Microsoft.FSharp.Collections
 
         let empty = MapEmpty 
 
-        let height  = function
+        let height (m: MapTree<'Key, 'Value>) = 
+          match m with
           | MapEmpty -> 0
           | MapOne _ -> 1
           | MapNode(_,_,_,_,h) -> h
 
-        let isEmpty m = 
+        let isEmpty (m: MapTree<'Key, 'Value>) = 
             match m with 
             | MapEmpty -> true
             | _ -> false
 
-        let mk l k v r = 
+        let mk l k v r : MapTree<'Key, 'Value> = 
             match l,r with 
             | MapEmpty,MapEmpty -> MapOne(k,v)
             | _ -> 
@@ -86,7 +84,7 @@ namespace Microsoft.FSharp.Collections
                 let m = if hl < hr then hr else hl 
                 MapNode(k,v,l,r,m+1)
 
-        let rebalance t1 k v t2 =
+        let rebalance t1 (k: 'Key) (v: 'Value) t2 =
             let t1h = height t1 
             let t2h = height t2 
             if  t2h > t1h + 2 then (* right is heavier than left *)
@@ -117,7 +115,7 @@ namespace Microsoft.FSharp.Collections
                   | _ -> failwith "rebalance"
                 else mk t1 k v t2
 
-        let rec add (comparer: IComparer<'Value>) k v m = 
+        let rec add (comparer: IComparer<'Key>) k (v: 'Value) (m: MapTree<'Key, 'Value>) = 
             match m with 
             | MapEmpty -> MapOne(k,v)
             | MapOne(k2,_) -> 
@@ -131,36 +129,37 @@ namespace Microsoft.FSharp.Collections
                 elif c = 0 then MapNode(k,v,l,r,h)
                 else rebalance l k2 v2 (add comparer k v r) 
 
-        let rec find (comparer: IComparer<'Value>) k m = 
+        let rec tryGetValue (comparer: IComparer<'Key>) k (v: byref<'Value>) (m: MapTree<'Key, 'Value>) = 
             match m with 
-            | MapEmpty -> raise (System.Collections.Generic.KeyNotFoundException())
+            | MapEmpty -> false
             | MapOne(k2,v2) -> 
                 let c = comparer.Compare(k,k2) 
-                if c = 0 then v2
-                else raise (System.Collections.Generic.KeyNotFoundException())
+                if c = 0 then v <- v2; true
+                else false
             | MapNode(k2,v2,l,r,_) -> 
                 let c = comparer.Compare(k,k2) 
-                if c < 0 then find comparer k l
-                elif c = 0 then v2
-                else find comparer k r
+                if c < 0 then tryGetValue comparer k &v l
+                elif c = 0 then v <- v2; true
+                else tryGetValue comparer k &v r
 
-        let rec tryFind (comparer: IComparer<'Value>) k m = 
-            match m with 
-            | MapEmpty -> None
-            | MapOne(k2,v2) -> 
-                let c = comparer.Compare(k,k2) 
-                if c = 0 then Some v2
-                else None
-            | MapNode(k2,v2,l,r,_) -> 
-                let c = comparer.Compare(k,k2) 
-                if c < 0 then tryFind comparer k l
-                elif c = 0 then Some v2
-                else tryFind comparer k r
+        let find (comparer: IComparer<'Key>) k (m: MapTree<'Key, 'Value>) =
+            let mutable v = Unchecked.defaultof<'Value>
+            if tryGetValue comparer k &v m then
+                v
+            else
+                raise (KeyNotFoundException())
 
-        let partition1 (comparer: IComparer<'Value>) (f:OptimizedClosures.FSharpFunc<_,_,_>) k v (acc1,acc2) = 
+        let tryFind (comparer: IComparer<'Key>) k (m: MapTree<'Key, 'Value>) = 
+            let mutable v = Unchecked.defaultof<'Value>
+            if tryGetValue comparer k &v m then
+                Some v
+            else
+                None
+
+        let partition1 (comparer: IComparer<'Key>) (f:OptimizedClosures.FSharpFunc<_,_,_>) k v (acc1,acc2) = 
             if f.Invoke(k, v) then (add comparer k v acc1,acc2) else (acc1,add comparer k v acc2) 
         
-        let rec partitionAux (comparer: IComparer<'Value>) (f:OptimizedClosures.FSharpFunc<_,_,_>) s acc = 
+        let rec partitionAux (comparer: IComparer<'Key>) (f:OptimizedClosures.FSharpFunc<_,_,_>) s acc = 
             match s with 
             | MapEmpty -> acc
             | MapOne(k,v) -> partition1 comparer f k v acc
@@ -169,11 +168,11 @@ namespace Microsoft.FSharp.Collections
                 let acc = partition1 comparer f k v acc
                 partitionAux comparer f l acc
 
-        let partition (comparer: IComparer<'Value>) f s = partitionAux comparer (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) s (empty,empty)
+        let partition (comparer: IComparer<'Key>) f s = partitionAux comparer (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) s (empty,empty)
 
-        let filter1 (comparer: IComparer<'Value>) (f:OptimizedClosures.FSharpFunc<_,_,_>) k v acc = if f.Invoke(k, v) then add comparer k v acc else acc 
+        let filter1 (comparer: IComparer<'Key>) (f:OptimizedClosures.FSharpFunc<_,_,_>) k v acc = if f.Invoke(k, v) then add comparer k v acc else acc 
 
-        let rec filterAux (comparer: IComparer<'Value>) (f:OptimizedClosures.FSharpFunc<_,_,_>) s acc = 
+        let rec filterAux (comparer: IComparer<'Key>) (f:OptimizedClosures.FSharpFunc<_,_,_>) s acc = 
             match s with 
             | MapEmpty -> acc
             | MapOne(k,v) -> filter1 comparer f k v acc
@@ -182,9 +181,9 @@ namespace Microsoft.FSharp.Collections
                 let acc = filter1 comparer f k v acc
                 filterAux comparer f r acc
 
-        let filter (comparer: IComparer<'Value>) f s = filterAux comparer (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) s empty
+        let filter (comparer: IComparer<'Key>) f s = filterAux comparer (OptimizedClosures.FSharpFunc<_,_,_>.Adapt(f)) s empty
 
-        let rec spliceOutSuccessor m = 
+        let rec spliceOutSuccessor (m: MapTree<'Key, 'Value>) = 
             match m with 
             | MapEmpty -> failwith "internal error: Map.spliceOutSuccessor"
             | MapOne(k2,v2) -> k2,v2,MapEmpty
@@ -193,7 +192,7 @@ namespace Microsoft.FSharp.Collections
                 | MapEmpty -> k2,v2,r
                 | _ -> let k3,v3,l' = spliceOutSuccessor l in k3,v3,mk l' k2 v2 r
 
-        let rec remove (comparer: IComparer<'Value>) k m = 
+        let rec remove (comparer: IComparer<'Key>) k (m: MapTree<'Key, 'Value>) = 
             match m with 
             | MapEmpty -> empty
             | MapOne(k2,_) -> 
@@ -211,7 +210,7 @@ namespace Microsoft.FSharp.Collections
                       mk l sk sv r'
                 else rebalance l k2 v2 (remove comparer k r) 
 
-        let rec mem (comparer: IComparer<'Value>) k m = 
+        let rec mem (comparer: IComparer<'Key>) k (m: MapTree<'Key, 'Value>) = 
             match m with 
             | MapEmpty -> false
             | MapOne(k2,_) -> (comparer.Compare(k,k2) = 0)
@@ -220,7 +219,7 @@ namespace Microsoft.FSharp.Collections
                 if c < 0 then mem comparer k l
                 else (c = 0 || mem comparer k r)
 
-        let rec iterOpt (f:OptimizedClosures.FSharpFunc<_,_,_>) m =
+        let rec iterOpt (f:OptimizedClosures.FSharpFunc<_,_,_>) (m: MapTree<'Key, 'Value>) =
             match m with 
             | MapEmpty -> ()
             | MapOne(k2,v2) -> f.Invoke(k2, v2)
@@ -303,7 +302,7 @@ namespace Microsoft.FSharp.Collections
 
         let fold f x m = foldOpt (OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt(f)) x m
 
-        let foldSectionOpt (comparer: IComparer<'Value>) lo hi (f:OptimizedClosures.FSharpFunc<_,_,_,_>) m x =
+        let foldSectionOpt (comparer: IComparer<'Key>) lo hi (f:OptimizedClosures.FSharpFunc<_,_,_,_>) m x =
             let rec foldFromTo (f:OptimizedClosures.FSharpFunc<_,_,_,_>) m x = 
                 match m with 
                 | MapEmpty -> x
@@ -322,7 +321,7 @@ namespace Microsoft.FSharp.Collections
            
             if comparer.Compare(lo,hi) = 1 then x else foldFromTo f m x
 
-        let foldSection (comparer: IComparer<'Value>) lo hi f m x =
+        let foldSection (comparer: IComparer<'Key>) lo hi f m x =
             foldSectionOpt comparer lo hi (OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt(f)) m x
 
         let toList m = 
@@ -381,8 +380,8 @@ namespace Microsoft.FSharp.Collections
           
         let mkIterator s = { stack = collapseLHS [s]; started = false }
 
-        let notStarted() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationNotStarted)))
-        let alreadyFinished() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationAlreadyFinished)))
+        let notStarted() = raise (InvalidOperationException(SR.GetString(SR.enumerationNotStarted)))
+        let alreadyFinished() = raise (InvalidOperationException(SR.GetString(SR.enumerationAlreadyFinished)))
 
         let current i =
             if i.started then
@@ -396,42 +395,35 @@ namespace Microsoft.FSharp.Collections
         let rec moveNext i =
           if i.started then
             match i.stack with
-              | MapOne _ :: rest -> i.stack <- collapseLHS rest;
+              | MapOne _ :: rest -> i.stack <- collapseLHS rest
                                     not i.stack.IsEmpty
               | [] -> false
               | _ -> failwith "Please report error: Map iterator, unexpected stack for moveNext"
           else
-              i.started <- true;  (* The first call to MoveNext "starts" the enumeration. *)
+              i.started <- true  (* The first call to MoveNext "starts" the enumeration. *)
               not i.stack.IsEmpty
 
         let mkIEnumerator s = 
           let i = ref (mkIterator s) 
           { new IEnumerator<_> with 
-                member self.Current = current !i
+                member __.Current = current !i
             interface System.Collections.IEnumerator with
-                member self.Current = box (current !i)
-                member self.MoveNext() = moveNext !i
-                member self.Reset() = i :=  mkIterator s
+                member __.Current = box (current !i)
+                member __.MoveNext() = moveNext !i
+                member __.Reset() = i :=  mkIterator s
             interface System.IDisposable with 
-                member self.Dispose() = ()}
+                member __.Dispose() = ()}
 
 
 
-#if FX_NO_DEBUG_PROXIES
-#else
     [<System.Diagnostics.DebuggerTypeProxy(typedefof<MapDebugView<_,_>>)>]
-#endif
-#if FX_NO_DEBUG_DISPLAYS
-#else
     [<System.Diagnostics.DebuggerDisplay("Count = {Count}")>]
-#endif
     [<Sealed>]
     [<CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")>]
     [<CompiledName("FSharpMap`2")>]
     type Map<[<EqualityConditionalOn>]'Key,[<EqualityConditionalOn;ComparisonConditionalOn>]'Value when 'Key : comparison >(comparer: IComparer<'Key>, tree: MapTree<'Key,'Value>) =
 
-#if FX_NO_BINARY_SERIALIZATION
-#else
+#if !FX_NO_BINARY_SERIALIZATION
         [<System.NonSerialized>]
         // This type is logically immutable. This field is only mutated during deserialization. 
         let mutable comparer = comparer 
@@ -453,8 +445,7 @@ namespace Microsoft.FSharp.Collections
             let comparer = LanguagePrimitives.FastGenericComparer<'Key> 
             new Map<'Key,'Value>(comparer,MapTree<_,_>.MapEmpty)
 
-#if FX_NO_BINARY_SERIALIZATION
-#else
+#if !FX_NO_BINARY_SERIALIZATION
         [<System.Runtime.Serialization.OnSerializingAttribute>]
         member __.OnSerializing(context: System.Runtime.Serialization.StreamingContext) =
             ignore(context)
@@ -481,18 +472,15 @@ namespace Microsoft.FSharp.Collections
     
         static member Create() : Map<'Key,'Value> = empty
 
-        new(ie : seq<_>) = 
+        new(elements : seq<_>) = 
            let comparer = LanguagePrimitives.FastGenericComparer<'Key> 
-           new Map<_,_>(comparer,MapTree.ofSeq comparer ie)
+           new Map<_,_>(comparer,MapTree.ofSeq comparer elements)
     
-#if FX_NO_DEBUG_DISPLAYS
-#else
         [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
-#endif
         member internal m.Comparer = comparer
         //[<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
         member internal m.Tree = tree
-        member m.Add(k,v) : Map<'Key,'Value> = 
+        member m.Add(key,value) : Map<'Key,'Value> = 
 #if TRACE_SETS_AND_MAPS
             MapTree.report()
             MapTree.numAdds <- MapTree.numAdds + 1
@@ -502,20 +490,18 @@ namespace Microsoft.FSharp.Collections
                MapTree.largestMapSize <- size
                MapTree.largestMapStackTrace <- System.Diagnostics.StackTrace().ToString()
 #endif
-            new Map<'Key,'Value>(comparer,MapTree.add comparer k v tree)
-#if FX_NO_DEBUG_DISPLAYS
-#else
+            new Map<'Key,'Value>(comparer,MapTree.add comparer key value tree)
+
         [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
-#endif
         member m.IsEmpty = MapTree.isEmpty tree
         member m.Item 
-         with get(k : 'Key) = 
+         with get(key : 'Key) = 
 #if TRACE_SETS_AND_MAPS
             MapTree.report()
             MapTree.numLookups <- MapTree.numLookups + 1
             MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
 #endif
-            MapTree.find comparer k tree
+            MapTree.find comparer key tree
         member m.TryPick(f) = MapTree.tryPick f tree 
         member m.Exists(f) = MapTree.exists f tree 
         member m.Filter(f)  : Map<'Key,'Value> = new Map<'Key,'Value>(comparer ,MapTree.filter comparer f tree)
@@ -536,24 +522,27 @@ namespace Microsoft.FSharp.Collections
 
         member m.Count = MapTree.size tree
 
-        member m.ContainsKey(k) = 
+        member m.ContainsKey(key) = 
 #if TRACE_SETS_AND_MAPS
             MapTree.report()
             MapTree.numLookups <- MapTree.numLookups + 1
             MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
 #endif
-            MapTree.mem comparer k tree
+            MapTree.mem comparer key tree
 
-        member m.Remove(k)  : Map<'Key,'Value> = 
-            new Map<'Key,'Value>(comparer,MapTree.remove comparer k tree)
+        member m.Remove(key)  : Map<'Key,'Value> = 
+            new Map<'Key,'Value>(comparer,MapTree.remove comparer key tree)
 
-        member m.TryFind(k) = 
+        member m.TryGetValue(key, [<System.Runtime.InteropServices.Out>] value:byref<'Value>) = 
+            MapTree.tryGetValue comparer key &value tree
+
+        member m.TryFind(key) = 
 #if TRACE_SETS_AND_MAPS
             MapTree.report()
             MapTree.numLookups <- MapTree.numLookups + 1
             MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
 #endif
-            MapTree.tryFind comparer k tree
+            MapTree.tryFind comparer key tree
 
         member m.ToList() = MapTree.toList tree
 
@@ -579,17 +568,17 @@ namespace Microsoft.FSharp.Collections
                 let rec loop () = 
                     let m1 = e1.MoveNext() 
                     let m2 = e2.MoveNext()
-                    (m1 = m2) && (not m1 || ((e1.Current.Key = e2.Current.Key) && (Unchecked.equals e1.Current.Value e2.Current.Value) && loop()))
+                    (m1 = m2) && (not m1 || let e1c, e2c = e1.Current, e2.Current in ((e1c.Key = e2c.Key) && (Unchecked.equals e1c.Value e2c.Value) && loop()))
                 loop()
             | _ -> false
 
         override this.GetHashCode() = this.ComputeHashCode()
 
         interface IEnumerable<KeyValuePair<'Key, 'Value>> with
-            member m.GetEnumerator() = MapTree.mkIEnumerator tree
+            member __.GetEnumerator() = MapTree.mkIEnumerator tree
 
         interface System.Collections.IEnumerable with
-            member m.GetEnumerator() = (MapTree.mkIEnumerator tree :> System.Collections.IEnumerator)
+            member __.GetEnumerator() = (MapTree.mkIEnumerator tree :> System.Collections.IEnumerator)
 
         interface IDictionary<'Key, 'Value> with 
             member m.Item 
@@ -604,15 +593,15 @@ namespace Microsoft.FSharp.Collections
 
             member s.Add(k,v) = ignore(k,v); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)))
             member s.ContainsKey(k) = s.ContainsKey(k)
-            member s.TryGetValue(k,r) = if s.ContainsKey(k) then (r <- s.[k]; true) else false
+            member s.TryGetValue(k,r) = s.TryGetValue(k,&r) 
             member s.Remove(k : 'Key) = ignore(k); (raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated))) : bool)
 
         interface ICollection<KeyValuePair<'Key, 'Value>> with 
-            member s.Add(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
-            member s.Clear() = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
-            member s.Remove(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Add(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Clear() = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Remove(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
             member s.Contains(x) = s.ContainsKey(x.Key) && Unchecked.equals s.[x.Key] x.Value
-            member s.CopyTo(arr,i) = MapTree.copyToArray tree arr i
+            member __.CopyTo(arr,i) = MapTree.copyToArray tree arr i
             member s.IsReadOnly = true
             member s.Count = s.Count
 
@@ -628,6 +617,16 @@ namespace Microsoft.FSharp.Collections
                 | _ -> 
                     invalidArg "obj" (SR.GetString(SR.notComparable))
 
+        interface IReadOnlyCollection<KeyValuePair<'Key, 'Value>> with
+            member s.Count = s.Count
+
+        interface IReadOnlyDictionary<'Key, 'Value> with
+            member s.Item with get(key) = s.[key]
+            member s.Keys = seq { for kvp in s -> kvp.Key }
+            member s.TryGetValue(key, value:byref<'Value>) = s.TryGetValue(key, &value) 
+            member s.Values = seq { for kvp in s -> kvp.Value }
+            member s.ContainsKey key = s.ContainsKey key
+
         override x.ToString() = 
            match List.ofSeq (Seq.truncate 4 x) with 
            | [] -> "map []"
@@ -636,16 +635,20 @@ namespace Microsoft.FSharp.Collections
            | [KeyValue h1;KeyValue h2;KeyValue h3] -> System.Text.StringBuilder().Append("map [").Append(LanguagePrimitives.anyToStringShowingNull h1).Append("; ").Append(LanguagePrimitives.anyToStringShowingNull h2).Append("; ").Append(LanguagePrimitives.anyToStringShowingNull h3).Append("]").ToString()
            | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ -> System.Text.StringBuilder().Append("map [").Append(LanguagePrimitives.anyToStringShowingNull h1).Append("; ").Append(LanguagePrimitives.anyToStringShowingNull h2).Append("; ").Append(LanguagePrimitives.anyToStringShowingNull h3).Append("; ... ]").ToString() 
 
-
-#if FX_NO_DEBUG_PROXIES
-#else
-    and 
+    and
         [<Sealed>]
         MapDebugView<'Key,'Value when 'Key : comparison>(v: Map<'Key,'Value>)  =  
 
-         [<System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.RootHidden)>]
-         member x.Items = v |> Seq.truncate 10000 |> Seq.toArray
-#endif
+            [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
+            member x.Items =
+                v |> Seq.truncate 10000 |> Seq.map KeyValuePairDebugFriendly |> Seq.toArray
+    
+    and
+        [<DebuggerDisplay("{keyValue.Value}", Name = "[{keyValue.Key}]", Type = "")>]
+        KeyValuePairDebugFriendly<'Key,'Value>(keyValue : KeyValuePair<'Key, 'Value>) =
+        
+            [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
+            member x.KeyValue = keyValue
         
 
 namespace Microsoft.FSharp.Collections
@@ -654,90 +657,91 @@ namespace Microsoft.FSharp.Collections
     open System.Diagnostics
     open System.Collections.Generic
     open Microsoft.FSharp.Core
-    open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
     open Microsoft.FSharp.Core.Operators
     open Microsoft.FSharp.Collections
-    open Microsoft.FSharp.Primitives.Basics
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     [<RequireQualifiedAccess>]
     module Map = 
 
         [<CompiledName("IsEmpty")>]
-        let isEmpty (m:Map<_,_>) = m.IsEmpty
+        let isEmpty (table:Map<_,_>) = table.IsEmpty
 
         [<CompiledName("Add")>]
-        let add k v (m:Map<_,_>) = m.Add(k,v)
+        let add key value (table:Map<_,_>) = table.Add(key,value)
 
         [<CompiledName("Find")>]
-        let find k (m:Map<_,_>) = m.[k]
+        let find key (table:Map<_,_>) = table.[key]
 
         [<CompiledName("TryFind")>]
-        let tryFind k (m:Map<_,_>) = m.TryFind(k)
+        let tryFind key (table:Map<_,_>) = table.TryFind(key)
 
         [<CompiledName("Remove")>]
-        let remove k (m:Map<_,_>) = m.Remove(k)
+        let remove key (table:Map<_,_>) = table.Remove(key)
 
         [<CompiledName("ContainsKey")>]
-        let containsKey k (m:Map<_,_>) = m.ContainsKey(k)
+        let containsKey key (table:Map<_,_>) = table.ContainsKey(key)
 
         [<CompiledName("Iterate")>]
-        let iter f (m:Map<_,_>) = m.Iterate(f)
+        let iter action (table:Map<_,_>) = table.Iterate(action)
 
         [<CompiledName("TryPick")>]
-        let tryPick f (m:Map<_,_>) = m.TryPick(f)
+        let tryPick chooser (table:Map<_,_>) = table.TryPick(chooser)
 
         [<CompiledName("Pick")>]
-        let pick f (m:Map<_,_>) = match tryPick f m with None -> raise (System.Collections.Generic.KeyNotFoundException()) | Some res -> res
+        let pick chooser (table:Map<_,_>) = match tryPick chooser table with None -> raise (KeyNotFoundException()) | Some res -> res
 
         [<CompiledName("Exists")>]
-        let exists f (m:Map<_,_>) = m.Exists(f)
+        let exists predicate (table:Map<_,_>) = table.Exists(predicate)
 
         [<CompiledName("Filter")>]
-        let filter f (m:Map<_,_>) = m.Filter(f)
+        let filter predicate (table:Map<_,_>) = table.Filter(predicate)
 
         [<CompiledName("Partition")>]
-        let partition f (m:Map<_,_>) = m.Partition(f)
+        let partition predicate (table:Map<_,_>) = table.Partition(predicate)
 
         [<CompiledName("ForAll")>]
-        let forall f (m:Map<_,_>) = m.ForAll(f)
+        let forall predicate (table:Map<_,_>) = table.ForAll(predicate)
 
         let mapRange f (m:Map<_,_>) = m.MapRange(f)
 
         [<CompiledName("Map")>]
-        let map f (m:Map<_,_>) = m.Map(f)
+        let map mapping (table:Map<_,_>) = table.Map(mapping)
 
         [<CompiledName("Fold")>]
-        let fold<'Key,'T,'State when 'Key : comparison> f (z:'State) (m:Map<'Key,'T>) = MapTree.fold f z m.Tree
+        let fold<'Key,'T,'State when 'Key : comparison> folder (state:'State) (table:Map<'Key,'T>) = MapTree.fold folder state table.Tree
 
         [<CompiledName("FoldBack")>]
-        let foldBack<'Key,'T,'State  when 'Key : comparison> f (m:Map<'Key,'T>) (z:'State) =  MapTree.foldBack  f m.Tree z
+        let foldBack<'Key,'T,'State  when 'Key : comparison> folder (table:Map<'Key,'T>) (state:'State) =  MapTree.foldBack  folder table.Tree state
         
         [<CompiledName("ToSeq")>]
-        let toSeq (m:Map<_,_>) = m |> Seq.map (fun kvp -> kvp.Key, kvp.Value)
+        let toSeq (table:Map<_,_>) = table |> Seq.map (fun kvp -> kvp.Key, kvp.Value)
 
         [<CompiledName("FindKey")>]
-        let findKey f (m : Map<_,_>) = m |> toSeq |> Seq.pick (fun (k,v) -> if f k v then Some(k) else None)
+        let findKey predicate (table : Map<_,_>) = table |> toSeq |> Seq.pick (fun (k,v) -> if predicate k v then Some(k) else None)
 
         [<CompiledName("TryFindKey")>]
-        let tryFindKey f (m : Map<_,_>) = m |> toSeq |> Seq.tryPick (fun (k,v) -> if f k v then Some(k) else None)
+        let tryFindKey predicate (table : Map<_,_>) = table |> toSeq |> Seq.tryPick (fun (k,v) -> if predicate k v then Some(k) else None)
 
         [<CompiledName("OfList")>]
-        let ofList (l: ('Key * 'Value) list) = Map<_,_>.ofList(l)
+        let ofList (elements: ('Key * 'Value) list) = Map<_,_>.ofList(elements)
 
         [<CompiledName("OfSeq")>]
-        let ofSeq l = Map<_,_>.Create(l)
+        let ofSeq elements = Map<_,_>.Create(elements)
 
         [<CompiledName("OfArray")>]
-        let ofArray (array: ('Key * 'Value) array) = 
+        let ofArray (elements: ('Key * 'Value) array) = 
            let comparer = LanguagePrimitives.FastGenericComparer<'Key> 
-           new Map<_,_>(comparer,MapTree.ofArray comparer array)
+           new Map<_,_>(comparer,MapTree.ofArray comparer elements)
 
         [<CompiledName("ToList")>]
-        let toList (m:Map<_,_>) = m.ToList()
+        let toList (table:Map<_,_>) = table.ToList()
 
         [<CompiledName("ToArray")>]
-        let toArray (m:Map<_,_>) = m.ToArray()
+        let toArray (table:Map<_,_>) = table.ToArray()
 
         [<CompiledName("Empty")>]
         let empty<'Key,'Value  when 'Key : comparison> = Map<'Key,'Value>.Empty
+
+        [<CompiledName("Count")>]
+        let count (table:Map<_,_>) = table.Count

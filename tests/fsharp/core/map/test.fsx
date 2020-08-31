@@ -1,5 +1,5 @@
 // #Conformance #Regression #Collections 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_map
 #endif
 
@@ -16,20 +16,6 @@ let test (s : string) b =
     if b then stderr.WriteLine " OK"
     else report_failure (s)
 
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
-
 (* TEST SUITE FOR STANDARD LIBRARY *)
   
 let test_eq_range n m x = 
@@ -38,9 +24,16 @@ let test_eq_range n m x =
   done;
   for i = n to m do 
     test "ew9wef" (Map.tryFind i x = Some (i * 100));
+    test "ew9wef" (x.TryGetValue(i) = (true, (i * 100)));
+    let mutable res = 0
+    test "ew9wef" (x.TryGetValue(i, &res) = true);
+    test "ew9wef" (res = (i * 100));
   done;
   for i = m+1 to m+100 do 
     test "ew9wef" (Map.tryFind i x = None);
+    test "ew9wef" (x.TryGetValue(i) = (false, 0));
+    let mutable res = 0
+    test "ew9wef" (x.TryGetValue(i,&res) = false);
   done;
   for i = m+1 to m+5 do 
     test "ew9cwef" ((try Some(Map.find i x) with :? System.Collections.Generic.KeyNotFoundException -> None) = None);
@@ -174,7 +167,7 @@ module Bug_FSharp_1_0_6307 =
     let t = typeof<global.System.Int32>
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

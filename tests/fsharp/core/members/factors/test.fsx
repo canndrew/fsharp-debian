@@ -6,7 +6,7 @@
 // Microsoft Research Ltd.
 //---------------------------------------------------------------
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_factors
 #endif
 
@@ -40,9 +40,6 @@ end
 
 open Types
 module ResizeArray = begin
-  /// Maps a ResizeArray to another ResizeArray by application of the function f to every element.
-  let map f (r:ResizeArray<_>) : ResizeArray<_> = r.ConvertAll (fun x -> f x)
-
   /// Iterates the function f for every element of the ResizeArray.
   let iter f (r:ResizeArray<_>) = r.ForEach (fun x -> f x)
 
@@ -272,7 +269,7 @@ let Gaussian1DPriorFactorNode((var: VariableNode<Gaussian1D>), mean, variance) =
 
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

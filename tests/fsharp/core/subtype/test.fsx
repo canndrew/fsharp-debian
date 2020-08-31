@@ -1,7 +1,8 @@
 // #Conformance #TypeInference #TypeConstraints #UnitsOfMeasure #Regression #Operators #Mutable 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_subtype
 #endif
+
 #light
 
 let failures = ref []
@@ -21,31 +22,16 @@ let check s v1 v2 = test s (v1 = v2)
 (* TEST SUITE FOR SUBTYPE CONSTRAINTS *)
 
 
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-
-do SetCulture()    
-#endif
-
 open System
 open System.IO
-
+open System.Reflection
 open System.Collections.Generic
 
 (* 'a[] :> ICollection<'a> *)
 let f1 (x: 'a[]) = (x :> ICollection<'a>) 
 do let x = f1 [| 3;4; |] in test "test239809" (x.Contains(3))
 
-#if Portable
-#else
+#if !NETCOREAPP1_0
 (* 'a[] :> IReadOnlyCollection<'a> *)
 let f1ReadOnly (x: 'a[]) = (x :> IReadOnlyCollection<'a>) 
 do let x = f1ReadOnly [| 3;4; |] in test "test239809ReadOnly" (x.Count = 2)
@@ -55,8 +41,7 @@ do let x = f1ReadOnly [| 3;4; |] in test "test239809ReadOnly" (x.Count = 2)
 let f2 (x: 'a[]) = (x :> IList<'a>) 
 do let x = f2 [| 3;4; |] in test "test239810" (x.Item(1) = 4)
 
-#if Portable
-#else
+#if !NETCOREAPP1_0
 (* 'a[] :> IReadOnlyList<'a> *)
 let f2ReadOnly (x: 'a[]) = (x :> IReadOnlyList<'a>) 
 do let x = f2ReadOnly [| 3;4; |] in test "test239810ReadOnly" (x.Item(1) = 4)
@@ -70,8 +55,7 @@ do let x = f3 [| 3;4; |] in for x in x do (Printf.printf "val %d\n" x) done
 let f4 (x: 'a[]) = (x :> IList<'a>) 
 do let x = f4 [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
 
-#if Portable
-#else
+#if !NETCOREAPP1_0
 (* Call 'foreachG' using an IReadOnlyList<int> (solved to IEnumerable<int>) *)
 let f4ReadOnly (x: 'a[]) = (x :> IReadOnlyList<'a>) 
 do let x = f4ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
@@ -81,8 +65,7 @@ do let x = f4ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x)
 let f5 (x: 'a[]) = (x :> ICollection<'a>) 
 do let x = f5 [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
 
-#if Portable
-#else
+#if !NETCOREAPP1_0
 (* Call 'foreachG' using an IReadOnlyCollection<int> (solved to IEnumerable<int>) *)
 let f5ReadOnly (x: 'a[]) = (x :> IReadOnlyCollection<'a>) 
 do let x = f5ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
@@ -123,8 +106,7 @@ let testUpcastToEnum1 (x: System.AttributeTargets) = (x :> System.Enum)
 let testUpcastToEnum6 (x: System.Enum) = (x :> System.Enum) 
 
 // these delegates don't exist in portable
-#if Portable
-#else
+#if !UNIX && !NETCOREAPP1_0
 let testUpcastToDelegate1 (x: System.Threading.ThreadStart) = (x :> System.Delegate) 
 
 let testUpcastToMulticastDelegate1 (x: System.Threading.ThreadStart) = (x :> System.MulticastDelegate) 
@@ -262,8 +244,7 @@ module SomeRandomOperatorConstraints = begin
 
     let sum64 seq : int64 = Seq.reduce (+) seq
     let sum32 seq : int64 = Seq.reduce (+) seq
-#if Portable
-#else
+#if !NETCOREAPP1_0
     let sumBigInt seq : BigInteger = Seq.reduce (+) seq
 #endif
     let sumDateTime (dt : DateTime) (seq : #seq<TimeSpan>) : DateTime = Seq.fold (+) dt seq
@@ -1382,8 +1363,7 @@ module CoercivePipingTest =
     check "clwcweki" (f8 3) (box 3)
     check "clwcweki" (f9 3) (box 3)
 
-#if NetCore
-#else
+#if !FX_RESHAPED_REFLECTION
     // this was the actual repro
     let f (info: System.Reflection.MethodInfo) = 
       System.Attribute.GetCustomAttribute(info, typeof<ReflectedDefinitionAttribute>)
@@ -1495,9 +1475,9 @@ module TestTwoConversionsOK =
 // asserted to be equal.
 //
 //This rule is a deliberate artificial limitation to reduce the complexity 
-// of type inference in the common case, at the cost of making “inline” code 
+// of type inference in the common case, at the cost of making Â“inlineÂ” code 
 // less generic. However, the rule should not apply to op_Explicit and op_Implicit constraints. These are special constraint names, known to the language, and we already have special rules around these operators to ensure that the return type 
-// is effectively considered to be part of the “name” of the constraint
+// is effectively considered to be part of the Â“nameÂ” of the constraint
 //  (i.t. op_Explicit -->  int64 is effectively a different constraint to op_Explicit --> int32). 
 //
 //So the solution is thus to not apply the rule for these constraints. 
@@ -1707,6 +1687,53 @@ module RecordPropertyConstraintTests =
     check "ckjwnewk" (f8()) (System.TimeSpan.FromSeconds 2.0) // after mutation
     check "ckjwnewk" (f10()) "Gary"
 
+// See https://github.com/Microsoft/visualfsharp/issues/740 - inlining on subtypes was not allowed
+module InliningOnSubTypes1 = 
+    type A() =
+        static member inline dosomething() = ()
+
+    type B() =
+        inherit A()
+        member inline this.SomethingElse a = a + 10
+        member inline this.SomethingElse2 a b = a + b + 10
+
+    let f () = 
+        let b = B() 
+        let x1 = b.SomethingElse 3
+        let x2 = b.SomethingElse2 3 4
+        (x1, x2)
+    do check "clkewlijwlkw" (f()) (13, 17) 
+
+
+#if !FX_RESHAPED_REFLECTION
+module StructUnionSingleCase = 
+    [<Struct>]
+    type S = S
+
+    do check "wekew0ewek1" (typeof<S>.IsValueType) true
+    do check "wekew0ewek1b" (typeof<S>.BaseType) typeof<System.ValueType>
+
+    type SAbbrev = S
+
+    do check "wekew0ewek2" (typeof<SAbbrev>.IsValueType) true
+    do check "wekew0ewek2b" (typeof<SAbbrev>.BaseType) typeof<System.ValueType>
+
+    type S0 = S0
+    do check "wekew0ewek3" (typeof<S0>.IsValueType) false
+    do check "wekew0ewek3b" (typeof<S0>.BaseType) typeof<obj>
+
+    [<Struct>]
+    type S2 = | S2
+
+    do check "wekew0ewek4" (typeof<S2>.IsValueType) true
+    do check "wekew0ewek4b" (typeof<S2>.BaseType) typeof<System.ValueType>
+
+    [<Struct>]
+    type S3 = | S2a | S3a
+
+    do check "wekew0ewek5" (typeof<S3>.IsValueType) true
+    do check "wekew0ewek5b" (typeof<S3>.BaseType) typeof<System.ValueType>
+#endif
 
 // See https://github.com/Microsoft/visualfsharp/issues/238
 module GenericPropertyConstraintSolvedByRecord = 
@@ -1717,7 +1744,182 @@ module GenericPropertyConstraintSolvedByRecord =
 
     let v = print_foo_memb { foo=1 } 
 
-#if ALL_IN_ONE
+module SRTPFix = 
+
+    open System
+
+    let inline konst x _ = x
+
+    type CFunctor() = 
+      static member inline fmap (f : ^a -> ^b, a : ^a list) = List.map f a
+      static member inline fmap (f : ^a -> ^b, a : ^a option) =
+        match a with
+        | None -> None
+        | Some x -> Some (f x)
+
+      // default implementation of replace
+      static member inline replace< ^a, ^b, ^c, ^d, ^e when ^a :> CFunctor and (^a or ^d) : (static member fmap : (^b -> ^c) * ^d -> ^e) > (a, f) =
+        ((^a or ^d) : (static member fmap : (^b -> ^c) * ^d -> ^e) (konst a, f))
+
+      // call overridden replace if present
+      static member inline replace< ^a, ^b, ^c when ^b : (static member replace : ^a * ^b -> ^c)>(a : ^a, f : ^b) =
+        (^b : (static member replace : ^a * ^b -> ^c) (a, f))
+
+    let inline replace_instance< ^a, ^b, ^c, ^d when (^a or ^c) : (static member replace : ^b * ^c -> ^d)> (a : ^b, f : ^c) =
+      ((^a or ^c) : (static member replace : ^b * ^c -> ^d) (a, f))
+
+    let inline fmap_instance< ^a, ^b, ^c, ^d, ^e when (^a or ^d) : (static member fmap : (^b -> ^c) * ^d -> ^e)>(f : ^b -> ^c, a : ^d) =
+      ((^a or ^d) : (static member fmap : (^b -> ^c) * ^d -> ^e) (f, a))
+
+    let inline fmap (f : ^a -> ^b) (a : ^c) =
+      fmap_instance<CFunctor, _, _, _, _> (f, a)
+
+    let inline replace (a : ^a) (f : ^b) : ^a0 when (CFunctor or  ^b) : (static member replace :  ^a *  ^b ->  ^a0) =
+      replace_instance<CFunctor, _, _, _> (a, f)
+
+    (*
+    type test(arg : string) = class
+      member __.data = arg
+      static member inline fmap (f : char -> char, a : test) = String.map f a.data
+      static member inline replace (a : char, f : test) = test.fmap (konst a, f)
+    end
+
+    let _ =
+      printfn "%A" <| fmap id [1;2;3];
+      printfn "%A" <| replace 5 [1;2;3];
+      printfn "%A" <| fmap ((+) 1) (Some 2);
+      printfn "%A" <| replace 'q' (test("HI"))
+     *)
+
+
+module SRTPFixAmbiguity =
+    // Mini Repro from FSharpPlus https://github.com/gusty/FSharpPlus
+    type Id<'t>(v:'t) = member __.getValue = v
+    type Interface<'t> = abstract member getValue : 't
+
+    type Monad =
+        static member inline InvokeReturn (x:'T) : '``Monad<'T>`` =
+            let inline call (mthd : ^M, output : ^R) = ((^M or ^R) : (static member Return: _ -> _) output)
+            call (Unchecked.defaultof<Monad>, Unchecked.defaultof<'``Monad<'T>``>) x
+        static member Return (_:Interface<'a>) = fun (_:'a) -> Unchecked.defaultof<Interface<'a>> : Interface<'a>
+        static member Return (_:seq<'a>      ) = fun x -> Seq.singleton x                         : seq<'a>
+        static member Return (_:option<'a>   ) = fun x -> Some x                                  : option<'a>
+        static member Return (_:Id<'a>       ) = fun x -> Id x                                    : Id<'a>
+
+        static member inline InvokeBind (source : '``Monad<'T>``) (binder : 'T -> '``Monad<'U>``) : '``Monad<'U>`` =
+            let inline call (mthd : 'M, input : 'I, _output : 'R, f) = ((^M or ^I or ^R) : (static member Bind: _*_ -> _) input, f)
+            call (Unchecked.defaultof<Monad>, source, Unchecked.defaultof<'``Monad<'U>``>, binder)
+        static member Bind (source : Interface<'T>, f : 'T -> Interface<'U>) = f source.getValue    : Interface<'U>
+        static member Bind (source : seq<'T>      , f : 'T -> seq<'U>      ) = Seq.collect f source : seq<'U>
+        static member Bind (source : Id<'T>       , f : 'T -> Id<'U>       ) = f source.getValue    : Id<'U>
+        static member Bind (source :option<'T>    , f : 'T -> _            ) = Option.bind f source : option<'U>
+
+    let inline result (x:'T)                                   = Monad.InvokeReturn x :'``Monad<'T>``
+    let inline (>>=) (x:'``Monad<'T>``) (f:'T->'``Monad<'U>``) = Monad.InvokeBind x f :'``Monad<'U>``
+
+    type ReaderT<'R,'``monad<'T>``> = ReaderT of ('R -> '``monad<'T>``)
+    let runReaderT (ReaderT x) = x : 'R -> '``Monad<'T>``
+    type ReaderT<'R,'``monad<'T>``> with
+        static member inline Return _ = fun (x : 'T) -> ReaderT (fun _ -> result x)                                                   : ReaderT<'R, '``Monad<'T>``> 
+        static member inline Bind (ReaderT (m:_->'``Monad<'T>``), f:'T->_) = ReaderT (fun r -> m r >>= (fun a -> runReaderT (f a) r)) : ReaderT<'R, '``Monad<'U>``>
+
+
+    let test1 : ReaderT<string, option<_>> = ReaderT result >>= result
+    let test2 : ReaderT<string, Id<_>>     = ReaderT result >>= result
+    let test3 : ReaderT<string, seq<_>>    = ReaderT result >>= result
+
+
+// See https://github.com/Microsoft/visualfsharp/issues/4040
+module InferenceRegression4040 = 
+    type Foo() =
+        static let test (t : 'T) : 'T list = 
+            let b : Bar<'T> = new Bar<'T>(t)
+            [b.Value]
+
+        static member Test(t : int) = test t
+
+    and Bar<'U>(value : 'U) =
+        member __.Value = value
+
+    printfn "%A" (Foo.Test 42)
+
+
+// See https://github.com/Microsoft/visualfsharp/issues/4040
+module InferenceRegression4040b = 
+    type Foo() =
+        static let test (t : 'T) : 'T list = 
+            let b : Bar<'T> = new Bar<'T>(t)
+            [b.Value]
+
+        static member Test(t : int) = test t
+
+    and Bar<'T>(value : 'T) =
+        member __.Value = value
+
+    printfn "%A" (Foo.Test 42)
+
+// See https://github.com/Microsoft/visualfsharp/issues/4040
+module InferenceRegression4040C = 
+    type Foo() =
+        static let test (t : 'T) : 'T list = 
+            let b : Bar<'T> = new Bar<'T>(t)
+            [b.Value]
+
+        static member Test(t : int) = test t
+
+    and Bar<'U>(value : 'U) =
+        member __.Value : 'U = value
+
+    printfn "%A" (Foo.Test 42)
+
+
+module TestInheritFunc = 
+    type Foo() =
+        inherit FSharpFunc<int,int>()
+        override __.Invoke(a:int) = a + 1
+
+    check "cnwcki1" ((Foo() |> box |> unbox<int -> int> ) 5) 6
+
+module TestInheritFuncGeneric = 
+    type Foo<'T,'U>() =
+        inherit FSharpFunc<'T,'T>()
+        override __.Invoke(a:'T) = a
+
+    check "cnwcki2" ((Foo<int,int>() |> box |> unbox<int -> int> ) 5) 5
+
+
+module TestInheritFunc2 = 
+    type Foo() =
+        inherit OptimizedClosures.FSharpFunc<int,int,int>()
+        override f.Invoke(a:int) = (fun u -> f.Invoke(a,u))
+        override __.Invoke(a:int,b:int) = a + b + 1
+
+    check "cnwcki3" ((Foo() |> box |> unbox<int -> int -> int> ) 5 6) 12
+
+module TestInheritFunc3 = 
+    type Foo() =
+        inherit OptimizedClosures.FSharpFunc<int,int,int,int>()
+        override f.Invoke(t) = (fun u v -> f.Invoke(t,u,v))
+        override __.Invoke(a:int,b:int,c:int) = a + b + c + 1
+
+    check "cnwcki4" ((Foo() |> box |> unbox<int -> int -> int -> int> ) 5 6 7) 19
+
+#if !NETCOREAPP1_0
+
+module TestConverter =
+    open System
+
+    let fromConverter (f: Converter<'T1,'X>) = FSharp.Core.FSharpFunc.FromConverter f
+    let implicitConv (f: Converter<'T1,'X>) = FSharp.Core.FSharpFunc.op_Implicit f
+    let toConverter (f: 'T1 -> 'X) = FSharp.Core.FSharpFunc.ToConverter f
+    let toConverter2 (f: FSharpFunc<'T1, 'X>) = FSharp.Core.FSharpFunc.ToConverter f
+
+    test "cenwceoiwe1" ((id |> toConverter |> fromConverter) 6 = 6)
+    test "cenwceoiwe2" ((id |> toConverter |> fromConverter |> toConverter2 |> implicitConv) 6 = 6)
+#endif
+
+
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

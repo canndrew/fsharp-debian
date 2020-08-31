@@ -1,11 +1,12 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Core
 
 module internal SR =
 #if FX_RESHAPED_REFLECTION
     open System.Reflection
-    type TypeInThisAssembly(_dummy : obj) = class end
+    type private TypeInThisAssembly (_dummy:obj) = class end
+    // can't use typeof here.  Because intrinsics are not yet defined.
     let private resources = new System.Resources.ResourceManager("FSCore", TypeInThisAssembly(null).GetType().GetTypeInfo().Assembly)
 #else
     let private resources = new System.Resources.ResourceManager("FSCore", System.Reflection.Assembly.GetExecutingAssembly())
@@ -76,7 +77,7 @@ module internal SR =
     let notARecordType = "notARecordType"
     let nullsNotAllowedInArray = "nullsNotAllowedInArray"
     let objIsNotARecord = "objIsNotARecord"
-    let keyNotFoundAlt = "keyNotFoundAltMessage"
+    let keyNotFoundAlt = "keyNotFoundAlt"
     let firstClassUsesOfSplice = "firstClassUsesOfSplice"
     let printfNotAFunType = "printfNotAFunType"
     let printfMissingFormatSpecifier = "printfMissingFormatSpecifier"
@@ -160,10 +161,3 @@ module internal SR =
     
     let GetString(name:System.String) : System.String = 
         resources.GetString(name, System.Globalization.CultureInfo.CurrentUICulture)
-    let GetString1(name:System.String, arg1:System.String) : System.String = 
-        System.String.Format(resources.GetString(name, System.Globalization.CultureInfo.CurrentUICulture), arg1)
-    let GetString2(name:System.String, arg1:System.String, arg2:System.String) : System.String = 
-        System.String.Format(resources.GetString(name, System.Globalization.CultureInfo.CurrentUICulture), arg1, arg2)
-    let GetString3(name:System.String, arg1:System.String, arg2:System.String, arg3:System.String) : System.String = 
-        System.String.Format(resources.GetString(name, System.Globalization.CultureInfo.CurrentUICulture), arg1, arg2, arg3)
-

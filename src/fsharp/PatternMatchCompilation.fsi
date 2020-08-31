@@ -1,16 +1,13 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 module internal Microsoft.FSharp.Compiler.PatternMatchCompilation
 
-open Internal.Utilities
+open Microsoft.FSharp.Compiler.AbstractIL.IL 
 open Microsoft.FSharp.Compiler
-open Microsoft.FSharp.Compiler.AbstractIL
-open Microsoft.FSharp.Compiler.AbstractIL.Internal
 open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Compiler.Range
-
 
 
 /// What should the decision tree contain for any incomplete match? 
@@ -32,7 +29,7 @@ type Pattern =
     | TPat_query of (Expr * TType list * (ValRef * TypeInst) option * int * PrettyNaming.ActivePatternInfo) * Pattern * range
     | TPat_unioncase of UnionCaseRef * TypeInst * Pattern list * range
     | TPat_exnconstr of TyconRef * Pattern list * range
-    | TPat_tuple of  Pattern list * TType list * range
+    | TPat_tuple of  TupInfo * Pattern list * TType list * range
     | TPat_array of  Pattern list * TType * range
     | TPat_recd of TyconRef * TypeInst * Pattern list * range
     | TPat_range of char * char * range
@@ -45,6 +42,8 @@ and PatternValBinding =
 
 and TypedMatchClause =  
     | TClause of Pattern * Expr option * DecisionTreeTarget * range
+
+val ilFieldToTastConst : ILFieldInit -> Tast.Const
 
 /// Compile a pattern into a decision tree and a set of targets.
 val internal CompilePattern : 
@@ -71,3 +70,4 @@ val internal CompilePattern :
 
 exception internal MatchIncomplete of bool * (string * bool) option * range
 exception internal RuleNeverMatched of range
+exception internal EnumMatchIncomplete of bool * (string * bool) option * range

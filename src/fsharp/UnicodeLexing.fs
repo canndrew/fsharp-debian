@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 module internal Microsoft.FSharp.Compiler.UnicodeLexing
 
@@ -47,7 +47,7 @@ let UnicodeFileAsLexbuf (filename,codePage : int option, retryLocked:bool) :  Le
         use reader = 
             match codePage with 
             | None -> new  StreamReader(stream,true)
-            | Some n -> new  StreamReader(stream,System.Text.Encoding.GetEncodingShim(n)) 
+            | Some n -> new  StreamReader(stream,System.Text.Encoding.GetEncoding(n)) 
         reader.ReadToEnd()
       with 
           // We can get here if the file is locked--like when VS is saving a file--we don't have direct

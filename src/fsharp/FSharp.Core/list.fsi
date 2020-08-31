@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Collections
 
@@ -11,6 +11,13 @@ namespace Microsoft.FSharp.Collections
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     [<RequireQualifiedAccess>]
     module List = 
+
+        /// <summary>Returns a new list that contains all pairings of elements from the first and second lists.</summary>
+        /// <param name="list1">The first input list.</param>
+        /// <param name="list2">The second input list.</param>
+        /// <returns>The resulting list of pairs.</returns>
+        [<CompiledName("AllPairs")>]
+        val allPairs: list1:'T1 list -> list2:'T2 list -> ('T1 * 'T2) list
 
         /// <summary>Returns a new list that contains the elements of the first list
         /// followed by elements of the second.</summary>
@@ -69,17 +76,18 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Collect")>]
         val collect: mapping:('T -> 'U list) -> list:'T list -> 'U list
 
-        /// <summary>Compares two lists using the given comparison function, element by element.
-        /// Returns the first non-zero result from the comparison function.  If the end of a list
-        /// is reached it returns a -1 if the first list is shorter and a 1 if the second list
-        /// is shorter.</summary>
+        /// <summary>Compares two lists using the given comparison function, element by element.</summary>
         ///
         /// <param name="comparer">A function that takes an element from each list and returns an int.
         /// If it evaluates to a non-zero value iteration is stopped and that value is returned.</param>
         /// <param name="list1">The first input list.</param>
         /// <param name="list2">The second input list.</param>
         ///
-        /// <returns>The first non-zero value from the comparison function.</returns>
+        /// <returns>Returns the first non-zero result from the comparison function. If the first list has a 
+        /// larger element, the return value is always positive. If the second list has a larger 
+        /// element, the return value is always negative. When the elements are equal in the two 
+        /// lists, 1 is returned if the first list is longer, 0 is returned if they are equal in 
+        /// length, and -1 is returned when the second list is longer.</returns>
         [<CompiledName("CompareWith")>]
         val inline compareWith: comparer:('T -> 'T -> int) -> list1:'T list -> list2:'T list -> int
 
@@ -190,7 +198,7 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Exists2")>]
         val exists2: predicate:('T1 -> 'T2 -> bool) -> list1:'T1 list -> list2:'T2 list -> bool
 
-        /// <summary>Returns the first element for which the given function returns <c>true</c>.
+        /// <summary>Returns the first element for which the given function returns True.
         /// Raises <c>KeyNotFoundException</c> if no such element exists.</summary>
         /// <param name="predicate">The function to test the input elements.</param>
         /// <param name="list">The input list.</param>
@@ -200,7 +208,7 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Find")>]
         val find: predicate:('T -> bool) -> list:'T list -> 'T
 
-        /// <summary>Returns the last element for which the given function returns <c>true</c>.
+        /// <summary>Returns the last element for which the given function returns True.
         /// Raises <c>KeyNotFoundException</c> if no such element exists.</summary>
         /// <param name="predicate">The function to test the input elements.</param>
         /// <param name="list">The input list.</param>
@@ -541,7 +549,7 @@ namespace Microsoft.FSharp.Collections
         val pairwise: list:'T list -> ('T * 'T) list
 
         /// <summary>Splits the collection into two collections, containing the 
-        /// elements for which the given predicate returns <c>true</c> and <c>false</c>
+        /// elements for which the given predicate returns True and False
         /// respectively. Element order is preserved in both of the created lists.</summary>
         /// <param name="predicate">The function to test the input elements.</param>
         /// <param name="list">The input list.</param>
@@ -643,7 +651,7 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Skip")>]
         val skip: count:int -> list: 'T list -> 'T list
 
-        /// <summary>Bypasses elements in a list while the given predicate returns <c>true</c>, and then returns
+        /// <summary>Bypasses elements in a list while the given predicate returns True, and then returns
         /// the remaining elements of the list.</summary>
         /// <param name="predicate">A function that evaluates an element of the list to a boolean value.</param>
         /// <param name="list">The input list.</param>
@@ -746,7 +754,7 @@ namespace Microsoft.FSharp.Collections
         val take: count:int -> list:'T list -> 'T list
 
         /// <summary>Returns a list that contains all elements of the original list while the 
-        /// given predicate returns <c>true</c>, and then returns no further elements.</summary>
+        /// given predicate returns True, and then returns no further elements.</summary>
         ///
         /// <param name="predicate">A function that evaluates to false when no more items should be returned.</param>
         /// <param name="list">The input list.</param>
@@ -774,6 +782,14 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("TryHead")>]
         val tryHead: list:'T list -> 'T option
 
+        /// <summary>Returns the transpose of the given sequence of lists.</summary>
+        /// <param name="lists">The input sequence of list.</param>
+        /// <returns>The transposed list.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+        [<CompiledName("Transpose")>]
+        val transpose: lists:seq<'T list> -> 'T list list
+
         /// <summary>Returns at most N elements in a new list.</summary>
         /// <param name="count">The maximum number of items to return.</param>
         /// <param name="array">The input list.</param>
@@ -790,8 +806,8 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("TryPick")>]
         val tryPick: chooser:('T -> 'U option) -> list:'T list -> 'U option
 
-        /// <summary>Returns the first element for which the given function returns <c>true.</c>.
-        /// Return <c>None</c> if no such element exists.</summary>
+        /// <summary>Returns the first element for which the given function returns True.
+        /// Return None if no such element exists.</summary>
         /// <param name="predicate">The function to test the input elements.</param>
         /// <param name="list">The input list.</param>
         /// <returns>The first element for which the predicate returns true, or None if
@@ -799,8 +815,8 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("TryFind")>]
         val tryFind: predicate:('T -> bool) -> list:'T list -> 'T option
 
-        /// <summary>Returns the last element for which the given function returns <c>true.</c>.
-        /// Return <c>None</c> if no such element exists.</summary>
+        /// <summary>Returns the last element for which the given function returns True.
+        /// Return None if no such element exists.</summary>
         /// <param name="predicate">The function to test the input elements.</param>
         /// <param name="list">The input list.</param>
         /// <returns>The last element for which the predicate returns true, or None if

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 /// Defines the framework for serializing and de-serializing TAST data structures as binary blobs for the F# metadata format.
 module internal Microsoft.FSharp.Compiler.TastPickle 
@@ -16,7 +16,7 @@ open Microsoft.FSharp.Compiler.TcGlobals
 [<NoEquality; NoComparison>]
 type PickledDataWithReferences<'RawData> = 
     { /// The data that uses a collection of CcuThunks internally
-      RawData: 'RawData; 
+      RawData: 'RawData 
       /// The assumptions that need to be fixed up
       FixupThunks: list<CcuThunk> } 
 
@@ -24,7 +24,6 @@ type PickledDataWithReferences<'RawData> =
     /// Like Fixup but loader may return None, in which case there is no fixup.
     member OptionalFixup: (CcuReference -> CcuThunk option) -> 'RawData
     
-#if INCLUDE_METADATA_WRITER
 /// The type of state written to by picklers
 type WriterState 
 
@@ -77,15 +76,13 @@ val internal p_ucref : pickler<UnionCaseRef>
 val internal p_expr : pickler<Expr>
 
 /// Serialize a TAST type
-val internal p_typ : pickler<TType>
+val internal p_ty : pickler<TType>
 
 /// Serialize a TAST description of a compilation unit
 val internal pickleCcuInfo : pickler<PickledCcuInfo>
 
 /// Serialize an arbitrary object using the given pickler
-val pickleObjWithDanglingCcus : string -> TcGlobals -> scope:CcuThunk -> pickler<'T> -> 'T -> byte[]
-#else
-#endif
+val pickleObjWithDanglingCcus : inMem: bool -> file: string -> TcGlobals -> scope:CcuThunk -> pickler<'T> -> 'T -> byte[]
 
 /// The type of state unpicklers read from
 type ReaderState 
@@ -139,13 +136,13 @@ val internal u_ucref : unpickler<UnionCaseRef>
 val internal u_expr : unpickler<Expr>
 
 /// Deserialize a TAST type
-val internal u_typ : unpickler<TType>
+val internal u_ty : unpickler<TType>
 
 /// Deserialize a TAST description of a compilation unit
 val internal unpickleCcuInfo : ReaderState -> PickledCcuInfo
 
 /// Deserialize an arbitrary object which may have holes referring to other compilation units
-val internal unpickleObjWithDanglingCcus : string -> viewedScope:ILScopeRef -> ilModule:ILModuleDef -> ('T  unpickler) -> byte[] ->  PickledDataWithReferences<'T>
+val internal unpickleObjWithDanglingCcus : file:string -> viewedScope:ILScopeRef -> ilModule:ILModuleDef option -> ('T  unpickler) -> byte[] ->  PickledDataWithReferences<'T>
 
 
 

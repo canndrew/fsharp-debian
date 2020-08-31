@@ -1,5 +1,5 @@
 // #Conformance #Regression #LetBindings #TypeInference 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_innerpoly
 #endif
 
@@ -16,8 +16,6 @@ let test (s : string) b =
     else report_failure (s)
 
 let check s b1 b2 = test s (b1 = b2)
-
-
 
 module TestNullIsGeneralizeable = begin
 
@@ -391,7 +389,7 @@ module InnerGenericBindingsInComputationExpressions = begin
     f()
 end
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =
