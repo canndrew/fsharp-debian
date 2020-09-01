@@ -162,7 +162,7 @@
     <Message Text="FsLexToolPath = $(FsLexToolPath)" />
     <Message Text="FsYaccToolPath = $(FsYaccToolPath)" />
     <Message Text="ToolsDir = $(ToolsDir)" />
-    <Error Text="Expect $(FSharpTargetsPath) to exist" Condition="'!Exists('$(FSharpTargetsPath)')" />
+    <Error Text="Expect $(FSharpTargetsPath) to exist" Condition="!Exists('$(FSharpTargetsPath)')" />
     <Error Text="Expect $(FSharpNetCoreLkgPath)\fsc.exe to exist when BUILD_PROTO_WITH_CORECLR_LKG==1" Condition="'$(BUILD_PROTO_WITH_CORECLR_LKG)' == 1 AND !Exists('$(FSharpNetCoreLkgPath)\fsc.exe')" />
     <Error Text="Expect $(FscToolPath)\$(FscToolExe) to exist" Condition="!Exists('$(FscToolPath)\$(FscToolExe)')" />
     <Error Text="Expect $(DotnetFscCompilerPath) to exist if non-empty" Condition="'$(DotnetFscCompilerPath)' != '' AND !Exists('$(DotnetFscCompilerPath)')" />
