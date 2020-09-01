@@ -87,7 +87,7 @@
  INSTALL_LIB = $(INSTALL_BIN)
  
  MSBUILD = msbuild
-+XBUILD = xbuild
++XBUILD = xbuild /verbosity:diagnostic
  
  EXTRA_DIST = configure
  NO_DIST = .gitignore lib/debug lib/proto lib/release
