@@ -1,12 +1,6 @@
 include $(topsrcdir)mono/config.make
 
-.PHONY: restore build build-proto
-
-restore:
-	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile ./NuGet.Config
-	chmod u+x packages/FSharp.Compiler.Tools.4.1.27/tools/fsi.exe 
-	chmod u+x packages/FsLexYacc.7.0.6/build/fslex.exe
-	chmod u+x packages/FsLexYacc.7.0.6/build/fsyacc.exe
+.PHONY: build build-proto
 
 # Make the proto using the bootstrap, then make the final compiler using the proto
 # We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
@@ -20,25 +14,24 @@ all:
 	@echo monolibdir=$(monolibdir)
 	@echo monobindir=$(monobindir)
 	@echo -----------
-	$(MAKE) restore
 	$(MAKE) build-proto
 	$(MAKE) build
 
 build-proto:
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/FSharp.Build-proto/FSharp.Build-proto.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/Fsc-proto/Fsc-proto.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=Proto /p:TargetFramework=$(TargetFramework) src/fsharp/FSharp.Build-proto/FSharp.Build-proto.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=Proto /p:TargetFramework=$(TargetFramework) src/fsharp/Fsc-proto/Fsc-proto.fsproj
 
 # The main targets
 build:
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Core/FSharp.Core.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Build/FSharp.Build.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Private/FSharp.Compiler.Private.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/Fsc/Fsc.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Interactive.Settings/FSharp.Compiler.Interactive.Settings.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Server.Shared/FSharp.Compiler.Server.Shared.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsi/Fsi.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 tests/FSharp.Core.UnitTests/FSharp.Core.Unittests.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Build/FSharp.Build.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Private/FSharp.Compiler.Private.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/Fsc/Fsc.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Interactive.Settings/FSharp.Compiler.Interactive.Settings.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/FSharp.Compiler.Server.Shared/FSharp.Compiler.Server.Shared.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/fsi/Fsi.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=net40 tests/FSharp.Core.UnitTests/FSharp.Core.Unittests.fsproj
 	mkdir -p $(Configuration)/fsharp30/net40/bin
 	mkdir -p $(Configuration)/fsharp31/net40/bin
 	mkdir -p $(Configuration)/fsharp40/net40/bin
@@ -66,12 +59,12 @@ install:
 	-rm -fr $(DESTDIR)$(monodir)/fsharp
 	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ F#
 	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#
-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v11.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v12.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v14.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v15.0/FSharp
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 install
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v15.0/FSharp
+	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 install
 	$(MAKE) -C mono/FSharp.Build install
 	$(MAKE) -C mono/FSharp.Compiler.Private install
 	$(MAKE) -C mono/Fsc install
@@ -79,18 +72,18 @@ install:
 	$(MAKE) -C mono/FSharp.Compiler.Server.Shared install
 	$(MAKE) -C mono/fsi install
 	$(MAKE) -C mono/fsiAnyCpu install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=3.0 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=3.1 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=4.0 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 FSharpCoreBackVersion=4.1 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable47 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable7 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable78 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=portable259 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=monoandroid10+monotouch10+xamarinios10 install
-	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=xamarinmacmobile install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.1 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=portable47 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=portable7 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=portable78 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=portable259 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=monoandroid10+monotouch10+xamarinios10 install
+	$(MAKE) -C mono/FSharp.Core TargetFramework=xamarinmacmobile install
 	echo "------------------------------ INSTALLED FILES --------------"
-	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/Reference\ Assemblies $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
+	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/Reference\ Assemblies $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
