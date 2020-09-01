@@ -2,6 +2,13 @@
 <!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Target Name="ValidateBuildTools">
+    <Message Importance="High" Text="hello world" />
+    <Message Importance="High" Text="BuildWith == $(BuildWith)" />
+    <Message Importance="High" Text="BUILD_PROTO_WITH_CORECLR_LKG == $(BUILD_PROTO_WITH_CORECLR_LKG)" />
+    <Message Importance="High" Text="TargetDotnetProfile == $(TargetDotnetProfile)" />
+  </Target>
+
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)..\</RepoRoot>
   </PropertyGroup>
@@ -164,7 +171,7 @@
     <Error Text="Expect $(FsYaccToolPath)\$(FsYaccToolExe) to exist" Condition="!Exists('$(FsYaccToolPath)\$(FsYaccToolExe)')" />
   </Target>
 
-  <Import Condition="'$(ProjectLanguage)' == 'FSharp'" Project="$(FSharpTargetsPath)"/>
+	  <!-- <Import Condition="'$(ProjectLanguage)' == 'FSharp'" Project="$(FSharpTargetsPath)"/> -->
 
   <!-- Hook up .NET Core to enable solution refresh of packages -->
   <PropertyGroup Condition="'$(TargetDotnetProfile)'=='coreclr'">

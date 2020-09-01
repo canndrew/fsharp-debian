@@ -21,6 +21,7 @@ debugvars:
 	@echo monolibdir=$(monolibdir)
 	@echo monobindir=$(monobindir)
 
+TargetFramework = net40
 TargetDotnetProfile = net40
 Configuration = Release
 DISTVERSION = 201011
@@ -116,6 +117,7 @@ INSTALL_BIN = $(INSTALL) -c -m 755
 INSTALL_LIB = $(INSTALL_BIN)
 
 MSBUILD = msbuild
+XBUILD = xbuild /verbosity:diagnostic /t:ValidateBuildTools
 
 EXTRA_DIST = configure
 NO_DIST = .gitignore lib/debug lib/proto lib/release

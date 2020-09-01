@@ -81,16 +81,6 @@
  
  dist:
  	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
---- fsharp.orig/mono/config.make
-+++ fsharp/mono/config.make
-@@ -116,6 +116,7 @@ INSTALL_BIN = $(INSTALL) -c -m 755
- INSTALL_LIB = $(INSTALL_BIN)
- 
- MSBUILD = msbuild
-+XBUILD = xbuild /verbosity:diagnostic
- 
- EXTRA_DIST = configure
- NO_DIST = .gitignore lib/debug lib/proto lib/release
 --- fsharp.orig/tests/projects/build.sh
 +++ fsharp/tests/projects/build.sh
 @@ -1,42 +1,42 @@
@@ -172,15 +162,3 @@
 +# (cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile259 && xbuild)
  
  
-diff --git a/mono/config.make b/mono/config.make
-index 00bd4a091..2d60fdcd4 100644
---- a/mono/config.make
-+++ b/mono/config.make
-@@ -21,6 +21,7 @@ debugvars:
- 	@echo monolibdir=$(monolibdir)
- 	@echo monobindir=$(monobindir)
- 
-+TargetFramework = net40
- TargetDotnetProfile = net40
- Configuration = Release
- DISTVERSION = 201011
