@@ -2,13 +2,6 @@
 <!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Target Name="ValidateBuildTools">
-    <Message Importance="High" Text="hello world" />
-    <Message Importance="High" Text="BuildWith == $(BuildWith)" />
-    <Message Importance="High" Text="BUILD_PROTO_WITH_CORECLR_LKG == $(BUILD_PROTO_WITH_CORECLR_LKG)" />
-    <Message Importance="High" Text="TargetDotnetProfile == $(TargetDotnetProfile)" />
-  </Target>
-
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)..\</RepoRoot>
   </PropertyGroup>
@@ -166,7 +159,7 @@
     <Error Text="Expect $(FSharpNetCoreLkgPath)\fsc.exe to exist when BUILD_PROTO_WITH_CORECLR_LKG==1" Condition="'$(BUILD_PROTO_WITH_CORECLR_LKG)' == 1 AND !Exists('$(FSharpNetCoreLkgPath)\fsc.exe')" />
     <Error Text="Expect $(FscToolPath)\$(FscToolExe) to exist" Condition="!Exists('$(FscToolPath)\$(FscToolExe)')" />
     <Error Text="Expect $(DotnetFscCompilerPath) to exist if non-empty" Condition="'$(DotnetFscCompilerPath)' != '' AND !Exists('$(DotnetFscCompilerPath)')" />
-    <Error Text="Expect $(FsiToolPath)\$(FsiToolExe) to exist" Condition="!Exists('$(FsiToolPath)\$(FsiToolExe)')" />
+	    <!-- <Error Text="Expect $(FsiToolPath)\$(FsiToolExe) to exist" Condition="!Exists('$(FsiToolPath)\$(FsiToolExe)')" /> -->
     <Error Text="Expect $(FsLexToolPath)\$(FsLexToolExe) to exist" Condition="!Exists('$(FsLexToolPath)\$(FsLexToolExe)')" />
     <Error Text="Expect $(FsYaccToolPath)\$(FsYaccToolExe) to exist" Condition="!Exists('$(FsYaccToolPath)\$(FsYaccToolExe)')" />
   </Target>
