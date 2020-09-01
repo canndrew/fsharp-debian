@@ -145,6 +145,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <FSharpTargetsPath>$(FSharpSourcesRoot)\fsharp\FSharp.Build\Microsoft.FSharp.Targets</FSharpTargetsPath>
     <!-- Compiler tool locations.		-->
     <FsLexToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsLexToolPath>
     <FsYaccToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsYaccToolPath>
