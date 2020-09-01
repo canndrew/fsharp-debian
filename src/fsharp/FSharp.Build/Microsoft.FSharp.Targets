@@ -73,8 +73,7 @@ this file.
     </PropertyGroup>
 
     <PropertyGroup>
-        <UsingXBuild>false</UsingXBuild>
-        <UsingXBuild Condition="'$(MSBuildAssemblyVersion)' == ''">true</UsingXBuild>
+        <UsingXBuild>true</UsingXBuild>
     </PropertyGroup>
 
     <Target
