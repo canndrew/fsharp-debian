@@ -164,7 +164,7 @@
     <Error Text="Expect $(FsYaccToolPath)\$(FsYaccToolExe) to exist" Condition="!Exists('$(FsYaccToolPath)\$(FsYaccToolExe)')" />
   </Target>
 
-  <Import Condition="'$(ProjectLanguage)' == 'FSharp'" Project="$(FSharpTargetsPath)"/>
+  <Import Condition="'$(ProjectLanguage)' == 'FSharp'" Project="$(FSharpSourcesRoot)\..\src\fsharp\FSharp.Build\Microsoft.FSharp.Targets"/>
 
   <!-- Hook up .NET Core to enable solution refresh of packages -->
   <PropertyGroup Condition="'$(TargetDotnetProfile)'=='coreclr'">
