@@ -4,6 +4,7 @@
 
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <FSharpTargetsPath>$(FSharpSourcesRoot)\fsharp\FSharp.Build\Microsoft.FSharp.Targets</FSharpTargetsPath>
     <ProjectLanguage>FSharp</ProjectLanguage>
     <BuildWith Condition=" '$(Configuration)' == 'Proto' ">LKG</BuildWith>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -260,7 +261,7 @@
 
   <!-- References -->
   <Import Project="$(FSharpSourcesRoot)\.nuget\NuGet.targets" Condition="Exists('$(FSharpSourcesRoot)\.nuget\NuGet.targets')" />
-	  <!-- <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" /> -->
+	  <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 
   <!-- Hook compilation phase to do custom work -->
   <!-- NOTE: The optdata and sigdata files are no longer needed by the F# compiler (the information is -->
