@@ -146,8 +146,8 @@
 
   <PropertyGroup>
     <!-- Compiler tool locations.		-->
-    <FsLexToolPath>$(FSharpSourcesRoot)\..\packages\FsLexYacc.7.0.6\build</FsLexToolPath>
-    <FsYaccToolPath>$(FSharpSourcesRoot)\..\packages\FsLexYacc.7.0.6\build</FsYaccToolPath>
+    <FsLexToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsLexToolPath>
+    <FsYaccToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsYaccToolPath>
     <FsiToolExe>fsi.exe</FsiToolExe>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
