@@ -3,7 +3,7 @@ include $(topsrcdir)config.make
 .PHONY: restore
 
 restore:
-	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget/NuGet.Config
+	true
 
 build-proto: restore
 	$(MAKE) -C src/fsharp/FSharp.Build-proto Configuration=Proto $@
