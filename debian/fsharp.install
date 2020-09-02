@@ -1,0 +1,20 @@
+usr/bin/fsharpc
+usr/bin/fsharpi
+usr/lib/mono/Microsoft?F#
+usr/lib/mono/Microsoft?SDKs
+usr/lib/mono/xbuild
+usr/lib/mono/4.5/fsc.exe					/usr/lib/cli/fsharp
+usr/lib/mono/4.5/fsi*.exe					/usr/lib/cli/fsharp
+usr/lib/mono/4.5/Microsoft.*.Targets				/usr/lib/cli/fsharp
+usr/lib/mono/4.5/FSharp.Build.dll				/usr/lib/cli/fsharp
+usr/lib/mono/gac/FSharp.Compiler.Interactive.Settings/4.4*/*    /usr/lib/cli/fsharp
+usr/lib/mono/gac/FSharp.Compiler.Server.Shared/4.4*/*   	/usr/lib/cli/fsharp
+usr/lib/mono/gac/FSharp.Compiler/4.4*/*       			/usr/lib/cli/fsharp
+lib/bootstrap/bin/Debug/fslex.exe				/usr/lib/cli/fsharp
+lib/bootstrap/bin/Debug/fsyacc.exe				/usr/lib/cli/fsharp
+lib/bootstrap/bin/Debug/FsLexYacc.Build.Tasks.dll		/usr/lib/cli/fsharp
+lib/bootstrap/src/FsSrGen/bin/Debug/FsSrGen.exe			/usr/lib/cli/fsharp
+lib/bootstrap/src/FSharp.SRGen.Build.Tasks/bin/Debug/FSharp.SRGen.Build.Tasks.dll	/usr/lib/cli/fsharp
+lib/release/fslex						/usr/bin
+lib/release/fsyacc						/usr/bin
+lib/release/fssrgen						/usr/bin
