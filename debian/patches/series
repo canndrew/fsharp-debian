@@ -1,4 +1,0 @@
-0001-Assume-we-are-inside-XBuild-when-4.5-Mono.Posix.dll-.patch
-new-bootstrap-binaries-from-build-output.patch
-no-nuget.patch
-debian-cli-policy.patch
