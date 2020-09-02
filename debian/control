@@ -1,0 +1,59 @@
+Source: fsharp
+Section: cli-mono
+Priority: optional
+Maintainer: Debian CLI Applications Team <pkg-cli-apps-team@lists.alioth.debian.org>
+Uploaders: Christopher James Halse Rogers <raof@ubuntu.com>
+Build-Depends: debhelper (>= 8.0.0~),
+  dh-autoreconf,
+  cli-common-dev (>= 0.9~),
+  mono-devel (>= 4.0.0~),
+  libmono-i18n4.0-cil,
+  tofrodos
+Standards-Version: 3.9.5
+Homepage: http://fsharp.org
+Vcs-Git: git://anongit.debian.org/pkg-cli-apps/packages/fsharp.git
+Vcs-Browser: http://anongit.debian.org/?p=pkg-cli-apps/packages/fsharp.git;a=summary
+XS-Testsuite: autopkgtest
+
+Package: fsharp
+Architecture: all
+Depends:
+  libfsharp-core4.3-cil (= ${binary:Version}),
+  ${cli:Depends},
+  ${shlibs:Depends},
+  ${misc:Depends},
+  libmono-compilerservices-symbolwriter4.0-cil,
+  mono-devel (>= 4.0.0~)
+Breaks: fsharp-console (<< 3.0.34+dfsg-3)
+Replaces: fsharp-console (<< 3.0.34+dfsg-3)
+Description: functional-first programming language - compiler for the CLI
+ F# is a multi-paradigm programming language, supporting functional,
+ imperative, and object-oriented structures.
+ .
+ This package contains an F# compiler targeting the CLI runtime.
+
+Package: libfsharp-core4.3-cil
+Architecture: all
+Depends:
+  ${cli:Depends},
+  ${shlibs:Depends},
+  ${misc:Depends},
+  mono-runtime-common (>= 3.2.8+dfsg-8~) | mono-runtime (>= 3.2.8+dfsg-8~),
+Description: functional-first programming language - core runtime library
+ F# is a multi-paradigm programming language, supporting functional,
+ imperative, and object-oriented structures.
+ .
+ This package contains the core runtime library for F# binaries.
+
+Package: libfsharp-data-typeproviders4.4-cil
+Architecture: all
+Depends:
+  ${cli:Depends},
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: functional-first programming language - data integration library
+ F# is a multi-paradigm programming language, supporting functional,
+ imperative, and object-oriented structures.
+ .
+ This package contains a runtime library that automatically binds remote data
+ sources such as OData, SQL, or WSDL into strongly-typed objects.
