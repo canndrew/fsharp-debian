@@ -1,0 +1,89 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+#
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+FSLEXYACC = https://github.com/fsprojects/FsLexYacc/archive/v6.1.0.tar.gz
+FSLEXYACC_FILE = $(shell basename $(FSLEXYACC))
+
+MAKEFILE = $(firstword $(MAKEFILE_LIST))
+DEBIAN_DIR = $(dir $(MAKEFILE))
+SOURCE_DIR = $(DEBIAN_DIR)/..
+
+DEB_VERSION = $(shell dpkg-parsechangelog -l$(DEBIAN_DIR)/changelog | grep ^Version | cut -d" " -f2)
+DEB_SOURCE_NAME = $(shell dpkg-parsechangelog -l$(DEBIAN_DIR)/changelog | grep ^Source | cut -d" " -f2)
+VERSION = $(shell echo $(DEB_VERSION) | cut -d"-" -f1 | sed 's/+dfsg.*//')
+
+
+override_dh_fixperms:
+	dh_fixperms
+	# Fix permissions of non-executable cruft
+	find debian -iname *.xml -type f -exec chmod 644 {} +
+	find debian -iname *.sigdata -type f -exec chmod 644 {} +
+	find debian -iname *.optdata -type f -exec chmod 644 {} +
+	find debian -iname *.targets -type f -exec chmod 644 {} +
+
+override_dh_auto_build:
+	dh_auto_build
+	xbuild lib/bootstrap/src/FsLex/FsLex.fsproj
+	xbuild lib/bootstrap/src/FsYacc/FsYacc.fsproj
+	xbuild lib/bootstrap/src/FsSrGen/FsSrGen.fsproj
+	xbuild lib/bootstrap/src/FSharp.SRGen.Build.Tasks/FSharp.SRGen.Build.Tasks.fsproj
+	xbuild lib/bootstrap/src/FsLexYacc.Build.Tasks/FsLexYacc.Build.Tasks.fsproj
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fslex.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fslex
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fsyacc.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fsyacc
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/FsSrGen.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fssrgen
+
+override_dh_clideps:
+	dh_clideps --exclude-moduleref=mscoree.dll
+
+get-orig-source:
+	uscan \
+		--package $(DEB_SOURCE_NAME) \
+		--watchfile $(DEBIAN_DIR)/watch \
+		--upstream-version $(VERSION) \
+		--download-version $(VERSION) \
+		--destdir . \
+		--force-download \
+		--rename \
+		--repack
+	if [ -d $(DEB_SOURCE_NAME)-$(VERSION) ]; then \
+		echo "$(DEB_SOURCE_NAME)-$(VERSION) is in the way, bailing out!"; \
+		exit 1; \
+	fi
+	tar -xzf $(DEB_SOURCE_NAME)_$(VERSION).orig.tar.gz
+	wget $(FSLEXYACC)
+	tar -xzf $(FSLEXYACC_FILE) -C $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/src/ --strip=2 --wildcards \*/src/FsLex
+	tar -xzf $(FSLEXYACC_FILE) -C $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/src/ --strip=2 --wildcards \*/src/FsYacc
+	tar -xzf $(FSLEXYACC_FILE) -C $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/src/ --strip=2 --wildcards \*/src/Common
+	tar -xzf $(FSLEXYACC_FILE) -C $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/src/ --strip=2 --wildcards \*/src/FsLexYacc.Runtime
+	tar -xzf $(FSLEXYACC_FILE) -C $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/src/ --strip=2 --wildcards \*/src/FsLexYacc.Build.Tasks
+	rm $(FSLEXYACC_FILE)
+	rm $(DEB_SOURCE_NAME)_$(VERSION).orig.tar.gz
+	find $(DEB_SOURCE_NAME)-$(VERSION) -name "*.exe" | grep -v "bootstrap"
+	find $(DEB_SOURCE_NAME)-$(VERSION) -name "*.exe" | grep -v "bootstrap" | xargs rm -f
+	find $(DEB_SOURCE_NAME)-$(VERSION) -name "*.dll" | grep -v "bootstrap"
+	find $(DEB_SOURCE_NAME)-$(VERSION) -name "*.dll" | grep -v "bootstrap" | xargs rm -f
+	find $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/signed
+	rm -rf $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/signed
+	rm -f $(DEB_SOURCE_NAME)-$(VERSION)/lib/bootstrap/4.0/FSharp.VsSqmMulti.dll
+	find $(DEB_SOURCE_NAME)-$(VERSION) -type f -name \*.fsproj -print0 | xargs -0 fromdos
+	tar --mtime=@1255820400 -cf ./$(DEB_SOURCE_NAME)_$(VERSION)+dfsg2.orig.tar $(DEB_SOURCE_NAME)-$(VERSION)
+	gzip -9fn ./$(DEB_SOURCE_NAME)_$(VERSION)+dfsg2.orig.tar
+	rm -r $(DEB_SOURCE_NAME)-$(VERSION)
+
+%:
+	dh $@ --with=cli,autoreconf
