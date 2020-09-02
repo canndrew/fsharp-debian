@@ -27,6 +27,8 @@ DEB_VERSION = $(shell dpkg-parsechangelog -l$(DEBIAN_DIR)/changelog | grep ^Vers
 DEB_SOURCE_NAME = $(shell dpkg-parsechangelog -l$(DEBIAN_DIR)/changelog | grep ^Source | cut -d" " -f2)
 VERSION = $(shell echo $(DEB_VERSION) | cut -d"-" -f1 | sed 's/+dfsg.*//')
 
+override_dh_auto_configure:
+	dh_auto_configure -- --with-bootstrap=lib/bootstrap/4.0
 
 override_dh_fixperms:
 	dh_fixperms
