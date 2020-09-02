@@ -1,0 +1,129 @@
+Index: fsharp/lib/bootstrap/src/FSharp.SRGen.Build.Tasks/FSharp.SRGen.Build.Tasks.fsproj
+===================================================================
+--- fsharp.orig/lib/bootstrap/src/FSharp.SRGen.Build.Tasks/FSharp.SRGen.Build.Tasks.fsproj
++++ fsharp/lib/bootstrap/src/FSharp.SRGen.Build.Tasks/FSharp.SRGen.Build.Tasks.fsproj
+@@ -48,7 +48,7 @@
+     <Reference Include="System.Core" />
+   </ItemGroup>
+       <PropertyGroup>
+-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
++    <FSharpTargetsPath>../../../release/Microsoft.FSharp.Targets</FSharpTargetsPath>
+       </PropertyGroup>
+   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+-</Project>
+\ No newline at end of file
++</Project>
+Index: fsharp/lib/bootstrap/src/FsLex/FsLex.fsproj
+===================================================================
+--- fsharp.orig/lib/bootstrap/src/FsLex/FsLex.fsproj
++++ fsharp/lib/bootstrap/src/FsLex/FsLex.fsproj
+@@ -14,10 +14,10 @@
+     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
+     <WarningLevel>3</WarningLevel>
+-    <FsLexToolPath>..\..\lkg\bin</FsLexToolPath>
+-    <FsLexToolExe>FsLex.exe</FsLexToolExe>
+-    <FsYaccToolPath>..\..\lkg\bin</FsYaccToolPath>
+-    <FsYaccToolExe>FsYacc.exe</FsYaccToolExe>
++    <FsLexToolPath>../../4.0/</FsLexToolPath>
++    <FsLexToolExe>fslex.exe</FsLexToolExe>
++    <FsYaccToolPath>../../4.0/</FsYaccToolPath>
++    <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
+     <TargetFrameworkProfile />
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+@@ -86,12 +86,9 @@
+       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+     </Content>
+   </ItemGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
++  <PropertyGroup>
++    <FSharpTargetsPath>../../4.0/Microsoft.FSharp.Targets</FSharpTargetsPath>
+   </PropertyGroup>
+   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+-  <Import Project="..\..\lkg\bin\FsLexYacc.targets" />
+-</Project>
+\ No newline at end of file
++  <Import Project="../../4.0/FsLexYacc.targets" />
++</Project>
+Index: fsharp/lib/bootstrap/src/FsLexYacc.Build.Tasks/FsLexYacc.Build.Tasks.fsproj
+===================================================================
+--- fsharp.orig/lib/bootstrap/src/FsLexYacc.Build.Tasks/FsLexYacc.Build.Tasks.fsproj
++++ fsharp/lib/bootstrap/src/FsLexYacc.Build.Tasks/FsLexYacc.Build.Tasks.fsproj
+@@ -50,16 +50,8 @@
+       <Private>True</Private>
+     </Reference>
+   </ItemGroup>
+-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+-    <StartAction>Program</StartAction>
+-    <StartProgram>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</StartProgram>
+-    <StartArguments>..\..\tests\TestProjects.sln</StartArguments>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
++  <PropertyGroup>
++    <FSharpTargetsPath>../../../release/Microsoft.FSharp.Targets</FSharpTargetsPath>
+   </PropertyGroup>
+   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+-</Project>
+\ No newline at end of file
++</Project>
+Index: fsharp/lib/bootstrap/src/FsSrGen/FsSrGen.fsproj
+===================================================================
+--- fsharp.orig/lib/bootstrap/src/FsSrGen/FsSrGen.fsproj
++++ fsharp/lib/bootstrap/src/FsSrGen/FsSrGen.fsproj
+@@ -47,7 +47,7 @@
+     <Reference Include="System.Xml" />
+   </ItemGroup>
+       <PropertyGroup>
+-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
++    <FSharpTargetsPath>../../../release/Microsoft.FSharp.Targets</FSharpTargetsPath>
+       </PropertyGroup>
+   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+-</Project>
+\ No newline at end of file
++</Project>
+Index: fsharp/lib/bootstrap/src/FsYacc/FsYacc.fsproj
+===================================================================
+--- fsharp.orig/lib/bootstrap/src/FsYacc/FsYacc.fsproj
++++ fsharp/lib/bootstrap/src/FsYacc/FsYacc.fsproj
+@@ -13,10 +13,10 @@
+     <AllowCrossTargeting>true</AllowCrossTargeting>
+     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
+-    <FsLexToolPath>..\..\lkg\bin</FsLexToolPath>
+-    <FsLexToolExe>FsLex.exe</FsLexToolExe>
+-    <FsYaccToolPath>..\..\lkg\bin</FsYaccToolPath>
+-    <FsYaccToolExe>FsYacc.exe</FsYaccToolExe>
++    <FsLexToolPath>../../4.0/</FsLexToolPath>
++    <FsLexToolExe>fslex.exe</FsLexToolExe>
++    <FsYaccToolPath>../../4.0</FsYaccToolPath>
++    <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
+     <TargetFrameworkProfile />
+   </PropertyGroup>
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+@@ -81,12 +81,9 @@
+       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+     </Content>
+   </ItemGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+-  </PropertyGroup>
+-  <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets')">
+-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
++  <PropertyGroup>
++    <FSharpTargetsPath>../../4.0/Microsoft.FSharp.Targets</FSharpTargetsPath>
+   </PropertyGroup>
+   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+-  <Import Project="..\..\lkg\bin\FsLexYacc.targets" />
+-</Project>
+\ No newline at end of file
++  <Import Project="../../4.0/FsLexYacc.targets" />
++</Project>
