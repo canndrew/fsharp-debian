@@ -641,8 +641,4 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
         <CompileBefore Remove="@(CompileBefore)"/>   
     </ItemGroup>
   </Target>
-  <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
-  <Target Name="BeforeBuild" BeforeTargets="Build">
-    <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages -ConfigFile $(FSharpSourcesRoot)\..\.nuget\NuGet.Config" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
-  </Target>
 </Project>
