@@ -1,0 +1,128 @@
+fsharp (4.0.0.4+dfsg2-2) unstable; urgency=medium
+
+  * [714aa5b] Add a strict version dependency for fsharp (Closes: #807421)
+
+ -- Jo Shields <jo.shields@xamarin.com>  Thu, 10 Dec 2015 16:17:12 +0000
+
+fsharp (4.0.0.4+dfsg2-1) experimental; urgency=medium
+
+  * [066b546] Refresh get-orig-source for F# 4.0
+  * [8659ed5] Imported Upstream version 4.0.0.4+dfsg
+  * [f5c1f79] Disable NuGet usage during build
+  * [ad394ee] Delete obsolete patch to bootstrap replacement
+  * [45ae32d] Refreshed debian/patches/debian-cli-policy.patch
+  * [db93ad3] Replacement patch to integrate build system for bootstrap binaries
+  * [519eabc] We messd up +dfsg, so need a +dfsg2
+  * [ced478b] Fix typo in get-orig-source
+  * [d257718] Imported Upstream version 4.0.0.4+dfsg2
+  * [1112301] Build FsSrGen too
+  * [c5c319a] Refresh packaging for F# 4 (Closes: #806216, #794533)
+  * [a567e93] Re-add bootstrap command launch scripts
+  * [2ec9cdf] Better build-dependencies
+  * [60c2349] Assume Mono has 4.5 runtime, not 4.0
+
+ -- Jo Shields <jo.shields@xamarin.com>  Wed, 02 Dec 2015 14:47:27 +0000
+
+fsharp (3.1.1.26+dfsg2-3) unstable; urgency=medium
+
+  * [a6804b5] Install sigdata/optdata into the GAC. (Closes: #767507)
+  * [52f8ffb] Depend on Mono 3.2.8+dfsg-8 for installation, since that 
+    is the minimum version to support sigdata/optdata in the GAC.
+
+ -- Jo Shields <jo.shields@xamarin.com>  Thu, 06 Nov 2014 10:26:05 +0000
+
+fsharp (3.1.1.26+dfsg2-2) unstable; urgency=medium
+
+  * [f082a28] Ensure 4.3.0 assembly gets installed (Closes: #767265)
+
+ -- Jo Shields <jo.shields@xamarin.com>  Fri, 31 Oct 2014 12:55:19 +0000
+
+fsharp (3.1.1.26+dfsg2-1) unstable; urgency=medium
+
+  * [f28700d] Actually delete unneeded binaries from +dfsg.orig.tar.gz
+  * [6ffdf50] Include various additional sources from F# Power Pack which 
+    are needed for rebuilding the bootstrap
+    (Closes: #763657)
+  * [e41e70e] Forcibly convert fsproj files to UNIX line endings, because 
+    Debian tools go to absolute hell on mixed-ending source trees in git, 
+    and we need to patch them
+  * [1370647] Imported Upstream version 3.1.1.26+dfsg2
+  * [537d87b] Compile missing pieces of bootstrap
+  * [0a73b56] Fix cli-common-dev build-dep to be backport-friendly
+  * [182eda4] Add bootstrap-required binaries to fsharp binary package
+
+ -- Jo Shields <jo.shields@xamarin.com>  Wed, 15 Oct 2014 12:49:07 +0100
+
+fsharp (3.1.1.26+dfsg-1) unstable; urgency=medium
+
+  * Refresh patches for new upstream version
+  * Drop explicit FSharp.Core.dll reference from dep8 test solution
+  * Run upstream testsuite in autopkgtests
+  * Use single-debian-patch and cherry-picks from master
+  * Adapt to changes in install locations
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 11 Jul 2014 16:30:53 +1000
+
+fsharp (3.0.34+dfsg-5) unstable; urgency=low
+
+  * No change rebuild for transition
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 11 Jul 2014 16:37:34 +1000
+
+fsharp (3.0.34+dfsg-4) unstable; urgency=medium
+
+  * Make DEP-8 test depend on only fsharp package to pick up any dependency
+    breakage
+  * Add missing libmono-compilerservices-symbolwriter4.0-cil dependency to
+    fsharp (Closes: 746585)
+  * Add fsharpc/fsharpi manpages
+  * Strip executable bit from xbuild .Targets files; now lintian clean!
+  * Temporarily add Depends on mono-runtime/-common to fix GAC install bug
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 06 May 2014 11:29:49 +1000
+
+fsharp (3.0.34+dfsg-3) unstable; urgency=medium
+
+  * Fix typo in FSharp.Compiler.Interactive.Settings install dir (LP: #1251253)
+  * Drop disable-debug-symbols patch; replace with dependency on
+    compilerservices-symbolwriter. (LP: #1259230)
+  * Drop FSharp.Build.dll & FSharp.Compiler.* from the GAC and bundle them into
+    the fsharp package.
+  * Bump Standards-Version to 3.9.5 (no changes needed)
+  * Improve watch file
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Tue, 11 Feb 2014 01:06:06 +0100
+
+fsharp (3.0.34+dfsg-2) experimental; urgency=medium
+
+  * Install F# xbuild project infrastructure
+  * Add basic DEP-8 testsuite, checking that a minimal F# project can be built by xbuild
+  * Add (temporary) links between fsharp and fsharp-console to fix xbuild projects.
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 07 Feb 2014 07:43:43 +0100
+
+fsharp (3.0.34+dfsg-1) experimental; urgency=low
+
+  * New upstream release
+  * Add README.source, documenting the +dfsg
+  * Add Vcs-Git headers
+  * Don't build 2.0- and 3.5-profile F# libraries
+  * Fix incorrect permissions more carefully
+  * Bump standards version to 3.9.5 (no changes required)
+  * Properly mark as team-maintained
+  * Make watch file more robust
+  * Use new cli-common infrastructure to install core libraries in framework paths
+    (Closes: #705906, #706683)
+  * Debian CLI policy fixes for fsharpc and fsharpi - now supports parallel
+    mono installations!
+  * debian/patches/never-ask-for-debug-symbols.patch: Disable request of debug
+    symbols for dynamically generated code by fsharpi - Mono does not implement
+    this (cf: https://github.com/fsharp/fsharp/issues/241)
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Fri, 17 Jan 2014 16:20:20 +1100
+
+fsharp (3.0.26-1) unstable; urgency=low
+
+  * Initial release (Closes: #603306)
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Sun, 04 Nov 2012 09:49:41 +1100
