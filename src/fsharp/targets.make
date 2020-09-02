@@ -211,9 +211,11 @@ install-sdk-lib:
 
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.5 profile
 # This also installs 'fsharpc' and 'fsharpi'
+#
+# Debian patch - Point fsharpc and fsharpi at our install paths, not the GAC.
 install-bin:
 	chmod +x $(outdir)$(ASSEMBLY)
-	sed -e 's,[@]DIR[@],$(gacdir)/fsharp,g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' -e 's,[@]MONOBINDIR[@],$(monobindir),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))
+	sed -e "s,[@]DIR[@],/usr/lib/cli/fsharp,g" -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))
 	@mkdir -p $(DESTDIR)$(gacdir)/fsharp
 	@mkdir -p $(DESTDIR)$(bindir)
