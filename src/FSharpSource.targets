@@ -609,7 +609,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\packages\fssrgen.$(FsSrGenVersion)\lib\net46</FsSrGenToolPath>
+    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsSrGenToolPath>
     <FsLexToolPath>$(FsLexYaccPath)</FsLexToolPath>
     <FsYaccToolPath>$(FsLexYaccPath)</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
