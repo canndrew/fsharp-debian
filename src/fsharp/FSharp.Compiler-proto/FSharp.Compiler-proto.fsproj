@@ -504,7 +504,7 @@
 		<Private>True</Private>
 	</Reference>
 	<Reference Include="System.Collections.Immutable">
-		<HintPath>..\..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+		<HintPath>..\..\..\lib\bootstrap\4.0\System.Collections.Immutable.dll</HintPath>
 		<Private>True</Private>
 	</Reference>
     <Reference Include="Microsoft.Build.Framework, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -540,7 +540,7 @@
     <Reference Include="Microsoft.DiaSymReader.PortablePdb"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath></Reference>
     <Reference Include="Microsoft.DiaSymReader"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.8\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath></Reference>
     <Reference Include="System.Reflection.Metadata"><HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.1-beta-24227-04\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath></Reference>
-    <Reference Include="System.Collections.Immutable"><HintPath>..\..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81</HintPath></Reference>
+    <Reference Include="System.Collections.Immutable"><HintPath>..\..\..\lib\bootstrap\4.0</HintPath></Reference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
