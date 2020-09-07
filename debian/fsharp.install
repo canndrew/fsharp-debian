@@ -13,7 +13,7 @@ usr/lib/mono/gac/FSharp.Compiler/4.4*/*       			/usr/lib/cli/fsharp
 lib/bootstrap/bin/Debug/fslex.exe				/usr/lib/cli/fsharp
 lib/bootstrap/bin/Debug/fsyacc.exe				/usr/lib/cli/fsharp
 lib/bootstrap/bin/Debug/FsLexYacc.Build.Tasks.dll		/usr/lib/cli/fsharp
-lib/bootstrap/src/FsSrGen/bin/Debug/FsSrGen.exe			/usr/lib/cli/fsharp
+lib/bootstrap/src/FsSrGen/bin/Debug/fssrgen.exe			/usr/lib/cli/fsharp
 lib/bootstrap/src/FSharp.SRGen.Build.Tasks/bin/Debug/FSharp.SRGen.Build.Tasks.dll	/usr/lib/cli/fsharp
 lib/release/fslex						/usr/bin
 lib/release/fsyacc						/usr/bin
