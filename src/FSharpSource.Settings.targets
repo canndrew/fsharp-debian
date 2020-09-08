@@ -131,7 +131,7 @@
     <MSBuildVersionFull>12.0.0.0</MSBuildVersionFull>	  
     <!-- FSharp.Compiler.Tools is currently only used to get a working FSI.EXE to execute some scripts during the build -->
     <!-- The LKG FSI.EXE requires MSBuild 15 to be installed, which is painful -->
-    <FsiToolPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.1.21\tools</FsiToolPath>
+    <FsiToolPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsiToolPath>
   </PropertyGroup>
 
   <Import Project="../Tools/Build.Common.props" Condition="'$(TargetFramework)'=='coreclr'"/>
