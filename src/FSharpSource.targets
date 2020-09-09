@@ -138,7 +138,7 @@
     <NUnitToolsLibDir>$(FSharpSourcesRoot)\..\packages\NUnit.ConsoleRunner\$(NUnitVersion)\tools\</NUnitToolsLibDir>
     <FsCheckVersion>2.6.2</FsCheckVersion>
     <FsCheckFullVersion>2.6.2.0</FsCheckFullVersion>
-    <FsCheckLibDir>$(FSharpSourcesRoot)\..\packages\FsCheck.$(FsCheckVersion)\lib\</FsCheckLibDir>
+    <FsCheckLibDir>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0\FsCheck.$(FsCheckVersion)\lib\</FsCheckLibDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
