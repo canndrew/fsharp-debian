@@ -134,7 +134,7 @@
   <PropertyGroup>
     <NUnitVersion>3.5.0</NUnitVersion>
     <NUnitFullVersion>3.5.0.0</NUnitFullVersion>
-    <NUnitLibDir>$(FSharpSourcesRoot)\..\packages\NUnit.$(NUnitVersion)\lib\net45</NUnitLibDir>
+    <NUnitLibDir>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0\NUnit.$(NUnitVersion)\lib\net45</NUnitLibDir>
     <NUnitToolsLibDir>$(FSharpSourcesRoot)\..\packages\NUnit.ConsoleRunner\$(NUnitVersion)\tools\</NUnitToolsLibDir>
     <FsCheckVersion>2.6.2</FsCheckVersion>
     <FsCheckFullVersion>2.6.2.0</FsCheckFullVersion>
