@@ -2,7 +2,7 @@
 
 #if INTERACTIVE
 //#r @"../../release/net40/bin/FSharp.Compiler.dll"
-#r @"../../packages/NUnit.3.5.0/lib/net45/nunit.framework.dll"
+#r @"../../lib/bootstrap/4.0/NUnit.3.5.0/lib/net45/nunit.framework.dll"
 #load "../../src/scripts/scriptlib.fsx" 
 #load "test-framework.fs" 
 #load "single-test.fs"
