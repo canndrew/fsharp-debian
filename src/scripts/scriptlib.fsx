@@ -36,7 +36,7 @@ module Scripting =
 #if INTERACTIVE
     let argv = Microsoft.FSharp.Compiler.Interactive.Settings.fsi.CommandLineArgs |> Seq.skip 1 |> Seq.toArray
 
-    let getCmdLineArgOptional switchName = 
+    let getCmdLineArgOptional (switchName: string) = 
         argv |> Array.filter(fun t -> t.StartsWith(switchName)) |> Array.map(fun t -> t.Remove(0, switchName.Length).Trim()) |> Array.tryHead 
 
     let getCmdLineArg switchName defaultValue = 
@@ -61,10 +61,10 @@ module Scripting =
 
     let getBasename a = Path.GetFileNameWithoutExtension a
     let getFullPath a = Path.GetFullPath a
-    let getFilename a = Path.GetFileName a
+    let getFilename (a: string) = Path.GetFileName a
     let getDirectoryName a = Path.GetDirectoryName a
 
-    let copyFile source dir =
+    let copyFile (source: string) dir =
         let dest = 
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |>ignore
             let result = Path.Combine(dir, Path.GetFileName source)
