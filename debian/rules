@@ -45,9 +45,9 @@ override_dh_auto_build:
 	xbuild lib/bootstrap/src/FsSrGen/FsSrGen.fsproj
 	xbuild lib/bootstrap/src/FSharp.SRGen.Build.Tasks/FSharp.SRGen.Build.Tasks.fsproj
 	xbuild lib/bootstrap/src/FsLexYacc.Build.Tasks/FsLexYacc.Build.Tasks.fsproj
-	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fslex.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fslex
-	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fsyacc.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fsyacc
-	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/FsSrGen.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > lib/release/fssrgen
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fslex.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > Release/net40/bin/fslex
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/fsyacc.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > Release/net40/bin/fsyacc
+	sed -e 's#@DIR@/@TOOL@#/usr/lib/cli/fsharp/FsSrGen.exe#' -e 's/--exename:$$(basename $$0) //' launcher.in > Release/net40/bin/fssrgen
 
 override_dh_clideps:
 	dh_clideps --exclude-moduleref=mscoree.dll
