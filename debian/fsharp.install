@@ -13,6 +13,6 @@ lib/bootstrap/bin/Debug/fsyacc.exe				/usr/lib/cli/fsharp
 lib/bootstrap/bin/Debug/FsLexYacc.Build.Tasks.dll		/usr/lib/cli/fsharp
 lib/bootstrap/src/FsSrGen/bin/Debug/fssrgen.exe			/usr/lib/cli/fsharp
 lib/bootstrap/src/FSharp.SRGen.Build.Tasks/bin/Debug/FSharp.SRGen.Build.Tasks.dll	/usr/lib/cli/fsharp
-lib/release/fslex						/usr/bin
-lib/release/fsyacc						/usr/bin
-lib/release/fssrgen						/usr/bin
+Release/net40/bin/fslex						/usr/bin
+Release/net40/bin/fsyacc						/usr/bin
+Release/net40/bin/fssrgen						/usr/bin
