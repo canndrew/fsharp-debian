@@ -51,7 +51,7 @@
     </Reference>
   </ItemGroup>
   <PropertyGroup>
-    <FSharpTargetsPath>../../../release/Microsoft.FSharp.Targets</FSharpTargetsPath>
+    <FSharpTargetsPath>../../../../Release/net40/bin/Microsoft.FSharp.Targets</FSharpTargetsPath>
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
 </Project>
